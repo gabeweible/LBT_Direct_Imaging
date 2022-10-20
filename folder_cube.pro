@@ -1,11 +1,12 @@
-pro folder_cube, folder_path
+pro folder_cube, find_path, save_path
+; Searches for all .FITS files in find_path, then combines them into a cube written to save_path
 
 compile_opt IDL2
 
 starttime=systime(/JULIAN)
 ; Search for the raw images in the specified data path and give some output to the user
-print, 'Searching for FITS files in', folder_path, '...'
-files = FILE_SEARCH(folder_path, '*.fits', COUNT=filecount)
+print, 'Searching for FITS files in', find_path, '...'
+files = FILE_SEARCH(find_path, '*.fits', COUNT=filecount)
 print, 'Found ', filecount, ' FITS files!'
 
 ; Use lists to take advantage of faster appending over arrays (we'll convert back to arrays later)
@@ -30,7 +31,7 @@ cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 print, 'Writing cube FITS...'
 
 ;Write the cube
-writefits, strcompress(folder_path+'cube.fits',/rem), cube
+writefits, strcompress(save_path+'cube.fits',/rem), cube
 print, 'Completed cube creation in ',(systime(/JULIAN)-starttime)*86400./60.,' minutes.'
 
 end

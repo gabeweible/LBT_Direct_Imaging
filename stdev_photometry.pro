@@ -12,7 +12,7 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-pro stdev_photometry, coadd=coadd, type=type
+pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    ; Type is 'ADI' or 'KLIP'
 
    COMPILE_OPT IDL2
@@ -46,7 +46,7 @@ pro stdev_photometry, coadd=coadd, type=type
    ;------------------------------[ End User Input ]---------------------------------
 
    ; Initialize arrays for our results
-   rec_xxs=[] & rec_yys=[] & rec_rhos=[] & rec_thetas=[] & rec_cons=[]
+   rec_xxs=[] & rec_yys=[] & rec_rhos=[] & rec_thetas=[] & rec_cons=[] & rec_fluxes=[]
    
    dither_folder = 'processed_left/dith1/'; Just choose dith 1 for simplicity
 
@@ -95,9 +95,17 @@ pro stdev_photometry, coadd=coadd, type=type
    print, 'Starting loop over thetas'
    ; Create an array of n_planets which start at the position of HII 1348 b
    thetas = (2*!DPI * findgen(n_planets) / n_planets) + real_theta
-   ; remove the three closest to HII 1348 b
-   remove, [0, 1, (size(thetas))[1]-1], thetas
-   thetas[where(thetas ge 2*!DPI)] -= 2*!DPI ; Keep angles on [0, 2pi) rad
+   
+   ; remove those on and too close to HII 1348 b
+   n_to_remove = n_planets / 16
+   remove, 0, thetas; Get rid of the one on top of HII 1348 b
+   ; Remove those that are too close (always the first or the last element)
+   for j = 0,((n_to_remove-1)/2)-1 do begin
+      remove, j, thetas
+      remove, (size(thetas))[1]-1, thetas
+   endfor; j removal for
+   
+   thetas = thetas mod 2*!DPI ; Keep angles on [0, 2pi) rad
    
    ; Calculate injected x and y values
    xxs = planet_r * (1./pxscale) * Cos(thetas) + 250.
@@ -152,7 +160,7 @@ pro stdev_photometry, coadd=coadd, type=type
       
       ; Save our results  to arrays
       rec_xxs=[rec_xxs,cen_x] & rec_yys=[rec_yys,cen_y] & rec_cons=[rec_cons,rec_con]
-      rec_rhos=[rec_rhos,cen_rho] & rec_thetas=[rec_thetas,cen_theta]
+      rec_rhos=[rec_rhos,cen_rho] & rec_thetas=[rec_thetas,cen_theta] & rec_fluxes=[rec_fluxes,rec_flux]
       
       print, 'Done.'+newline+'Writing FITS...'
       writefits, strcompress(output_path+'stdev_photometry/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), uncert_image
@@ -164,12 +172,12 @@ pro stdev_photometry, coadd=coadd, type=type
 
    ; Save our results
    print, 'Saving...'
-   save,filename=output_path+'stdev_photometry/'+obj+'_negative_inj_data.sav',xxs,yys,thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_cons
+   save,filename=output_path+'stdev_photometry/'+obj+'_negative_inj_data.sav',xxs,yys,thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_cons,rec_fluxes
    print, 'Done.'
    
    ; Combine all of the trials into a cube and write it to the same folder
    print, newline, 'Saving the trials into one FITS cube'
-   folder_cube, output_path+'stdev_photometry/ref_and_cube/'
+   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/ref_and_cube/'
    
    print, 'FITS cube created! Starting analysis', newline
    
@@ -191,6 +199,10 @@ pro stdev_photometry, coadd=coadd, type=type
    ; Get contrast uncertainty
    cons = fltarr(n_planets-1) + contrast
    con_diff = cons - rec_cons & con_uncert = STDDEV(con_diff)
+   print, 'Recovered fluxes:', rec_fluxes
+   print, 'Reference flux:', ref_flux
+   print, 'Recovered contrasts:', rec_cons
+   print, 'Contrast differences:', con_diff, newline
    
    
    ; Print our results to the terminal:
