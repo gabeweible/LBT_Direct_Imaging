@@ -36,11 +36,11 @@ for ii = 0, filecount-1 do begin
    print, 'Filename: ', files[ii], newline
    frame = readfits(files[ii])
    if type eq 'list' then cube.Add, [[frame]]
-   if type eq 'array' then cube = [cube, frame]
+   if type eq 'array' then cube = [ [[cube]], [[frame]] ]
    
    ; print number of frames
    if type eq 'list' then print, 'Number of frames in cube: ', n_elements(cube)
-   if type eq 'array' then print, 'Number of frames in cube: ', (size(cube))[1]
+   if type eq 'array' then print, 'Number of frames in cube: ', (size(cube))[3]
    k += 1
 endfor; ii = start_frame for loop
 

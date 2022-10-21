@@ -170,16 +170,12 @@ pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gau
    
    ; Some average differences to make sure that their isn't an obvious systematic error
    avg_xdiff = mean(x_diff) & avg_ydiff = mean(y_diff) & avg_rho_diff = mean(rho_diff) & avg_theta_diff = mean(theta_diff)
-   fluxes = fltarr((size(rec_fluxes))[1]) + b_flux
-   flux_diff = rec_fluxes-fluxes & avg_fluxdiff = mean(flux_diff)
    
    ; Get contrast uncertainty
-   flux_err = stddev(flux_diff) & rel_flux_err = flux_err / mean(rec_fluxes)
+   flux_err = stddev(rec_fluxes) & rel_flux_err = flux_err / mean(rec_fluxes)
    print, 'Injected and recovered: ', (size(thetas))[1], ' artificial planets'
-   print, 'Recovered fluxes:', rec_fluxes, newline
    print, 'Flux error: ', flux_err
-   print, 'Relative flux error: ', rel_flux_err, ' %', newline
-   print, 'Mean flux difference: ', avg_fluxdiff
+   print, 'Relative flux error: ', rel_flux_err * 100, ' %', newline
    
    ; Print our results to the terminal:
    print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * pxscale, ' (arcsec)'
@@ -195,6 +191,6 @@ pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gau
    print, 'theta uncertainty:', !RADEG * theta_uncert, ' (deg)'
    print, 'mean theta (PA) difference:', !RADEG * avg_theta_diff, ' (deg)', newline
    
-   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.', newline
+   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
 
 end; That's all, folks!
