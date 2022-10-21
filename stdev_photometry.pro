@@ -81,7 +81,7 @@ pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gau
    remove, 0, thetas; Get rid of the one on top of HII 1348 b
    ; Remove those that are too close (always the first or the last element)
    for j = 0,((n_to_remove-1)/2)-1 do begin
-      remove, j, thetas
+      remove, 0, thetas
       remove, (size(thetas))[1]-1, thetas
    endfor; j removal for
    
