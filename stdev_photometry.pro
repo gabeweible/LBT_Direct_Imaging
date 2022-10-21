@@ -12,8 +12,16 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
+; Inject contrast 1 planet in a frame and then recover that flux to use as the denominator in the contrast
+; calculations
+
+; another way to do it is to just take stdev of recovered fluxes and their mean being
+; as close to the actual companion to get the photometric uncertainty (divide by the mean to get a
+; percent)
+
 pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    ; Type is 'ADI' or 'KLIP'
+   ; n_planets is meant to be a multiple of 16 (the number that fit naturally)
 
    COMPILE_OPT IDL2
    newline = string(10B)
@@ -32,7 +40,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
 
    ; Inject_planets parameters
    use_gauss = 0; Fit a gaussian to the pupil median PSF to try and get rid of the 'lobes'
-   n_planets = 48; Includes HII 1348 b!
+   if not keyword_set(n_planets) then n_planets = 16; Includes HII 1348 b!
    pxscale = 0.0107 ; arcsec/pixel
    contrast = 0.008914755; Average of last two runs with photometry.pro and made positive
    fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
@@ -51,27 +59,6 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    dither_folder = 'processed_left/dith1/'; Just choose dith 1 for simplicity
 
    obj_cube = readfits(output_path + dither_folder + obj + string(ct) +  '_cube_skysub_cen_clean.fits')
-   ;unsaturated data can just use the pupil image
-   ref = readfits(output_path + dither_folder + obj + string(ct) +  '_pupil.fits')
-   ;if use_gauss then ref = gauss2dfit(ref, /tilt); I don't think that I really need this here.
-
-   big_ref=obj_cube[*,*,0]
-   big_ref[*]=0
-
-   ;build bigger reference image
-   for xx=0, (size(ref))[1] - 1 do begin
-      for yy=0, (size(ref))[1] - 1 do begin
-
-         big_ref[250.-(size(ref))[1]/2.+xx,250.-(size(ref))[1]/2.+yy]=ref[xx,yy]
-
-      endfor
-   endfor
-   
-   writefits, strcompress(output_path+'stdev_photometry/ref_and_cube/'+obj+'_reference.fits', /rem), big_ref
-   ; flux of what we recover dividied by the flux of this reference gives us a recovered contrast
-   
-   aper,big_ref,0,0,ref_flux,ref_fluxerr,sky,skyerr,1.75,aper_rad,sky_rad,[-99E99,999E99],/flux,SETSKYVAL=0,/exact
-   ; ref_flux is now saved
 
    ; Default to ADI for now
    if not keyword_set(type) then type = 'ADI'
@@ -105,7 +92,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
       remove, (size(thetas))[1]-1, thetas
    endfor; j removal for
    
-   thetas = thetas mod 2*!DPI ; Keep angles on [0, 2pi) rad
+   thetas[where(thetas gt 2*!DPI)] -= 2*!DPI ; Keep angles on [0, 2pi) rad
    
    ; Calculate injected x and y values
    xxs = planet_r * (1./pxscale) * Cos(thetas) + 250.
@@ -146,8 +133,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
       cen_x = XCEN & cen_y = YCEN
       
       ; Do some photometry on our recovered source
-      aper,uncert_image,cen_x,cen_y,rec_flux,rec_fluxerr,sky,skyerr,1.75,aper_rad,sky_rad,[-99E99,99E99],/flux,SETSKYVAL=0,/exact
-      rec_con = rec_flux / ref_flux
+      aper,uncert_image,cen_x,cen_y,rec_flux,rec_fluxerr,sky,skyerr,1.75,aper_rad,sky_rad,[-99E99,99E99],/flux,SETSKYVAL=0,/exact,/nan
       
       ; Calculate rho, theta from cen_x, cen_y
       cen_rho = pxscale * SQRT(((cen_x-250.)^2.)+((cen_y-250.)^2.))
@@ -159,8 +145,8 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
       print, 'Injected rho, theta:', planet_r, theta, newline
       
       ; Save our results  to arrays
-      rec_xxs=[rec_xxs,cen_x] & rec_yys=[rec_yys,cen_y] & rec_cons=[rec_cons,rec_con]
-      rec_rhos=[rec_rhos,cen_rho] & rec_thetas=[rec_thetas,cen_theta] & rec_fluxes=[rec_fluxes,rec_flux]
+      rec_xxs=[rec_xxs,cen_x] & rec_yys=[rec_yys,cen_y] & rec_fluxes=[rec_fluxes,rec_flux]
+      rec_rhos=[rec_rhos,cen_rho] & rec_thetas=[rec_thetas,cen_theta]
       
       print, 'Done.'+newline+'Writing FITS...'
       writefits, strcompress(output_path+'stdev_photometry/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), uncert_image
@@ -177,7 +163,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    
    ; Combine all of the trials into a cube and write it to the same folder
    print, newline, 'Saving the trials into one FITS cube'
-   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/ref_and_cube/'
+   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/cube/'
    
    print, 'FITS cube created! Starting analysis', newline
    
@@ -198,12 +184,10 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    
    ; Get contrast uncertainty
    cons = fltarr(n_planets-1) + contrast
-   con_diff = cons - rec_cons & con_uncert = STDDEV(con_diff)
+   flux_err = stddev(rec_fluxes) & rel_flux_err = flux_err / mean(rec_fluxes)
    print, 'Recovered fluxes:', rec_fluxes
-   print, 'Reference flux:', ref_flux
-   print, 'Recovered contrasts:', rec_cons
-   print, 'Contrast differences:', con_diff, newline
-   
+   print, 'Flux error:', flux_err
+   print, 'Relative flux error:', rel_flux_err, '%'
    
    ; Print our results to the terminal:
    print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * pxscale, ' (arcsec)'
@@ -218,9 +202,6 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    ; Converted from (rad) to (deg)
    print, 'theta uncertainty:', !RADEG * theta_uncert, ' (deg)'
    print, 'mean theta (PA) difference:', !RADEG * avg_theta_diff, ' (deg)', newline
-   
-   print, 'contrast uncertainty:', con_uncert
-   print, 'mean contrast difference:', mean(con_diff), newline
    
    print, 'Completed photometry uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
 
