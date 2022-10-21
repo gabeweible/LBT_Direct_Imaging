@@ -16,9 +16,9 @@
 ; as close to the actual companion to get the photometric uncertainty (divide by the mean to get a
 ; percent error)
 
-pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use_gauss
+pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gauss
    ; Type is 'ADI' or 'KLIP'
-   ; n_planets is meant to be a multiple of 16 (the number that fit naturally)
+   ; planet_spots is meant to be a multiple of 16 (the number that fit naturally)
 
    COMPILE_OPT IDL2
    newline = string(10B)
@@ -36,7 +36,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
    n_ang = 2 & do_cen_filter = 1 & filter = 17. & ct = 0.994
 
    ; Inject_planets parameters
-   if not keyword_set(n_planets) then n_planets = 16; Includes HII 1348 b!
+   if not keyword_set(planet_spots) then planet_spots = 16; Includes HII 1348 b!
    if not keyword_set(use_gauss) then use_gauss = 0
    pxscale = 0.0107 ; arcsec/pixel
    contrast = 0.008914755; Average of last two runs with photometry.pro and made positive
@@ -51,11 +51,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
    ;------------------------------[ End User Input ]---------------------------------
 
    ; Initialize arrays for our results
-   rec_xxs=[] & rec_yys=[] & rec_rhos=[] & rec_thetas=[] & rec_cons=[] & rec_fluxes=[]
-   
-   dither_folder = 'processed_left/dith1/'; Just choose dith 1 for simplicity
-
-   obj_cube = readfits(output_path + dither_folder + obj + string(ct) +  '_cube_skysub_cen_clean.fits')
+   rec_xxs=[] & rec_yys=[] & rec_rhos=[] & rec_thetas=[] & rec_fluxes=[]
 
    ; Default to ADI for now
    if not keyword_set(type) then type = 'ADI'
@@ -75,13 +71,13 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
          string(filter)+'_neg_inj_'+string(0)+'_total_adi.fits',/rem))
    endif
    print, 'Original image read, finding companion centroid...', newline
-
    print, 'Starting loop over thetas'
-   ; Create an array of n_planets which start at the position of HII 1348 b
-   thetas = (2*!DPI * findgen(n_planets) / n_planets) + real_theta
+   
+   ; Create an array of planet_spots which start at the position of HII 1348 b
+   thetas = (2*!DPI * findgen(planet_spots) / planet_spots) + real_theta
    
    ; remove those on and too close to HII 1348 b
-   n_to_remove = n_planets / 16
+   n_to_remove = planet_spots / 16
    remove, 0, thetas; Get rid of the one on top of HII 1348 b
    ; Remove those that are too close (always the first or the last element)
    for j = 0,((n_to_remove-1)/2)-1 do begin
@@ -97,7 +93,6 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
    
    trial = 0
    foreach theta, thetas do begin
-      
       ; Do our injections
       hii1348_pipeline, rho=planet_r, theta=theta, contrast=contrast, pre_inj_stuff=0,$
          neg_inj=0, uncert=1, trial=trial, coadd=coadd, use_gauss=use_gauss; Inject and run ADI
@@ -147,25 +142,22 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
       
       print, 'Done.'+newline+'Writing FITS...'
       writefits, strcompress(output_path+'stdev_photometry/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), uncert_image
-      
       print, 'Done.'+newline+'Incrementing trial...'
       trial += 1
-      
-   endforeach
+   endforeach; thetas foreach
 
    ; Save our results
    print, 'Saving...'
-   save,filename=output_path+'stdev_photometry/'+obj+'_negative_inj_data.sav',xxs,yys,thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_cons,rec_fluxes
+   save,filename=output_path+'stdev_photometry/'+obj+'_negative_inj_data.sav',xxs,yys,thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_fluxes
    print, 'Done.'
    
    ; Combine all of the trials into a cube and write it to the same folder
    print, newline, 'Saving the trials into one FITS cube'
    folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/cube/', 'array'
-   
    print, 'FITS cube created! Starting analysis', newline
    
    ; Create an array of HII 1348 b radii
-   rhos = fltarr(n_planets-1) + planet_r
+   rhos = fltarr(planet_spots-1) + planet_r
    
    ; Get vectors of differences between injected and recovered values
    x_diff=xxs-rec_xxs & y_diff=yys-rec_yys & rho_diff=rhos-rec_rhos & theta_diff=thetas-rec_thetas
@@ -178,14 +170,16 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
    
    ; Some average differences to make sure that their isn't an obvious systematic error
    avg_xdiff = mean(x_diff) & avg_ydiff = mean(y_diff) & avg_rho_diff = mean(rho_diff) & avg_theta_diff = mean(theta_diff)
+   fluxes = fltarr((size(rec_fluxes))[1]) + b_flux
+   flux_diff = rec_fluxes-fluxes & avg_fluxdiff = mean(flux_diff)
    
    ; Get contrast uncertainty
-   cons = fltarr(n_planets-1) + contrast
-   flux_err = stddev(rec_fluxes) & rel_flux_err = flux_err / mean(rec_fluxes)
+   flux_err = stddev(flux_diff) & rel_flux_err = flux_err / mean(rec_fluxes)
    print, 'Injected and recovered: ', (size(thetas))[1], ' artificial planets'
    print, 'Recovered fluxes:', rec_fluxes, newline
-   print, 'Flux error:', flux_err
-   print, 'Relative flux error:', rel_flux_err, ' %', newline
+   print, 'Flux error: ', flux_err
+   print, 'Relative flux error: ', rel_flux_err, ' %', newline
+   print, 'Mean flux difference: ', avg_fluxdiff
    
    ; Print our results to the terminal:
    print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * pxscale, ' (arcsec)'
@@ -201,6 +195,6 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use
    print, 'theta uncertainty:', !RADEG * theta_uncert, ' (deg)'
    print, 'mean theta (PA) difference:', !RADEG * avg_theta_diff, ' (deg)', newline
    
-   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
+   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.', newline
 
 end; That's all, folks!

@@ -12,7 +12,8 @@ newline = string(10B)
 starttime=systime(/JULIAN)
 ; Search for the raw images in the specified data path and give some output to the user
 print, 'Searching for FITS files in', find_path, '...'
-files = FILE_SEARCH(find_path, '*.fits', COUNT=filecount)
+cd, find_path; change directories to where we're looking for FITS files
+files = FILE_SEARCH('*.fits', COUNT=filecount)
 print, 'Found ', filecount, ' FITS files!'
 
 ; Use lists to take advantage of faster appending over arrays (we'll convert back to arrays later)
