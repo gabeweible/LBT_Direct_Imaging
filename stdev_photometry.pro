@@ -12,14 +12,11 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-; Inject contrast 1 planet in a frame and then recover that flux to use as the denominator in the contrast
-; calculations
-
 ; another way to do it is to just take stdev of recovered fluxes and their mean being
 ; as close to the actual companion to get the photometric uncertainty (divide by the mean to get a
-; percent)
+; percent error)
 
-pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
+pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets, use_gauss=use_gauss
    ; Type is 'ADI' or 'KLIP'
    ; n_planets is meant to be a multiple of 16 (the number that fit naturally)
 
@@ -39,8 +36,8 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    n_ang = 2 & do_cen_filter = 1 & filter = 17. & ct = 0.994
 
    ; Inject_planets parameters
-   use_gauss = 0; Fit a gaussian to the pupil median PSF to try and get rid of the 'lobes'
    if not keyword_set(n_planets) then n_planets = 16; Includes HII 1348 b!
+   if not keyword_set(use_gauss) then use_gauss = 0
    pxscale = 0.0107 ; arcsec/pixel
    contrast = 0.008914755; Average of last two runs with photometry.pro and made positive
    fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
@@ -163,7 +160,7 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    
    ; Combine all of the trials into a cube and write it to the same folder
    print, newline, 'Saving the trials into one FITS cube'
-   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/cube/'
+   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/cube/', 'array'
    
    print, 'FITS cube created! Starting analysis', newline
    
@@ -185,9 +182,10 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    ; Get contrast uncertainty
    cons = fltarr(n_planets-1) + contrast
    flux_err = stddev(rec_fluxes) & rel_flux_err = flux_err / mean(rec_fluxes)
-   print, 'Recovered fluxes:', rec_fluxes
+   print, 'Injected and recovered: ', (size(thetas))[1], ' artificial planets'
+   print, 'Recovered fluxes:', rec_fluxes, newline
    print, 'Flux error:', flux_err
-   print, 'Relative flux error:', rel_flux_err, '%'
+   print, 'Relative flux error:', rel_flux_err, ' %', newline
    
    ; Print our results to the terminal:
    print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * pxscale, ' (arcsec)'
@@ -203,6 +201,6 @@ pro stdev_photometry, coadd=coadd, type=type, n_planets=n_planets
    print, 'theta uncertainty:', !RADEG * theta_uncert, ' (deg)'
    print, 'mean theta (PA) difference:', !RADEG * avg_theta_diff, ' (deg)', newline
    
-   print, 'Completed photometry uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
+   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
 
 end; That's all, folks!

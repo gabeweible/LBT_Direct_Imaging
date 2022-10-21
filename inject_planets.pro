@@ -1,4 +1,4 @@
-pro inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss
+pro inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent
 ;'HII1348', '~/OneDrive/Research/HII1348/testing'
 compile_opt idl2
 newline = string(10B)
@@ -44,7 +44,7 @@ restore, filename = output_folder + dither_folder + obj_name + string(ct) +  '_p
 
 ;derotate
 for ii=0, (size(obj_cube))[3]-1 do begin
-   print, 'Derotating by ', -angles[ii]-truenorth
+   if not keyword_set(silent) or silent eq 0 then print, 'Derotating by ', -angles[ii]-truenorth
    obj_cube[*,*,ii]=rot(obj_cube[*,*,ii],-angles[ii]-truenorth,/interp)
 endfor
 
@@ -62,7 +62,7 @@ endfor
 
 ;inject planets
 for ii=0, n_planets-1 do begin
-   Print, 'Injecting planet', ii
+   Print, 'Injecting planet', ii, ' in run: ', runs, newline
    big_ref_ii=big_ref*planet_contrast[ii]
       ; If angle and radius are given
       if keyword_set(planet_theta) and keyword_set(planet_r) then begin
@@ -82,7 +82,7 @@ endfor
 
 ;rotate back to pupil stabilized orientation
 for ii=0, (size(obj_cube))[3]-1 do begin
-   print, 'Rotating by ', angles[ii]
+   if not keyword_set(silent) or silent eq 0 then print, 'Rotating by ', angles[ii]
    obj_cube[*,*,ii]=rot(obj_cube[*,*,ii],angles[ii]+truenorth,/interp)
 endfor
 

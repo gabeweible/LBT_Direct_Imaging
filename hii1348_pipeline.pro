@@ -1,7 +1,7 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y, contrast=contrast, pre_inj_stuff=pre_inj_stuff, neg_inj=neg_inj, trial=trial, headless=headless, outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert
 
 compile_opt IDL2; Strict arrays (square brackets only) and 32-bit integers as default, instead of 16
-
+newline = string(10B)
 start_time = systime(/JULIAN); Get the current time in a Julian date format (number of days since January 1, 4713 BC, with decimals)
 
 ;------------------------------[ Start User Input ]---------------------------------
@@ -56,6 +56,7 @@ endif
 
 
 ; Rotate/KLIP parameters (after testing/refinement)
+silent=1; Don't print so much in adi.pro "Rotating by ..."
 norm = 1; Normalize ADI frames to reduce residuals around the star
 fs = 0; Run find_sources within ADI.pro
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
@@ -126,15 +127,15 @@ if pre_inj_stuff eq 1 then begin
    clean, obj, output_path, corr_thresh, do_cen_filter
 
    ; two options, one for radius and angle and the other for x and y
-   if keyword_set(rho) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss
-   if keyword_set(planet_x) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss
+   if keyword_set(rho) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss, silent=silent
+   if keyword_set(planet_x) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss, silent=silent
    
    ;Change output folder manually in rotate.pro and klip.pro !!!!!!!!!!!!!!! (right now as long as it's testing_coadd_ whatever it's fine)
    ; I'm having trouble with find_sources here. (Everything is working now, but note that I might need to adjust the correction
    ; factor to get acurate values)
    ;klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type, do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame, klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
    
-   adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert
+   adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert, silent=silent
    
 endif
 if pre_inj_stuff eq 0 then begin
@@ -142,14 +143,14 @@ if pre_inj_stuff eq 0 then begin
    print, 'pre_inj_stuff:', pre_inj_stuff
 
    ; two options, one for radius and angle and the other for x and y
-   if keyword_set(rho) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss
+   if keyword_set(rho) then inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss, silent=silent
    if keyword_set(planet_x) then begin
       inject_planets, obj, output_path, n_planets, planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss
    endif
 
    ;klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type, do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame, klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj
 
-   adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert
+   adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert, silent=silent
    
 endif
 

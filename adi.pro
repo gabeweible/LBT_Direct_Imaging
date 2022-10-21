@@ -1,6 +1,7 @@
-pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert
-;'HII1348', '~/OneDrive/research/HII1348/testing_coadd_ '+ string(coadd) + '_coadd_ '+ string(coadd) + '', 1, 1, 15. for current run
+pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert, silent=silent
+; silent will supress all the "Rotating by ..." prints.
 compile_opt idl2
+newline = string(10B)
 
 for runs=1,4 do begin
    
@@ -28,7 +29,7 @@ n_frames = (size(obj_cube))[3]
 if do_destripe then begin
    print, 'destriping 90 degrees...'
    for ii=0, n_frames - 1 do obj_cube[*,*,ii] = destripe(obj_cube[*,*,ii], 90., clip_level=0.0, /nodisp)
-   print, 'destriping 0 degrees...'
+   print, 'destriping 0 degrees...', newline
    for ii=0, n_frames - 1 do obj_cube[*,*,ii] = destripe(obj_cube[*,*,ii], 0., clip_level=0.0, /nodisp)
 endif; destripe if
 
@@ -47,7 +48,7 @@ medarr, obj_cube, medframe; medframe is the output here of calling medarr on our
 adi_cube = obj_cube
 
 for ii=0, n_frames - 1 do begin
-   print, 'Rotating by ', angles[ii]
+   if not keyword_set(silent) or silent eq 0 then print, 'Rotating by ', angles[ii], newline
    obj_cube[*,*,ii] = rot(obj_cube[*,*,ii], -angles[ii] - truenorth, /interp)
    adi_cube[*,*,ii] -= medframe
    adi_cube[*,*,ii] = rot(adi_cube[*,*,ii], -angles[ii] - truenorth, /interp)
@@ -78,9 +79,9 @@ PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
 PSFN = PSF / MAX(PSF); N for normalized
 adiframe_c = convolve(adiframe, PSFN)
 
-print, 'Writing FITS for run:', runs, '...'
+print, 'Writing FITS for run: ', runs, ' ...'
 writefits, strcompress(output_folder + dither_folder + obj_name + inj_string + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '_median_derot_adi_conv.fits', /rem), adiframe_c
-print, 'FITS for run:', runs, 'written!'
+print, 'FITS for run: ', runs, ' written!', newline
 
 if runs eq 1 then adinods = adiframe else adinods = [[[adinods]], [[adiframe]]]
 
