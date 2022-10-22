@@ -55,6 +55,11 @@ pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gau
 
    ; Default to ADI for now
    if not keyword_set(type) then type = 'ADI'
+   
+   if planet_spots mod 16 then begin
+      print, "Error enter an integer multiple of 16 for planet_spots"
+      stop
+   endif
 
    print, 'Reading in total ' + type +  ' image...'
    ;if type eq 'KLIP' then begin
