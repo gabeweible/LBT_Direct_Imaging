@@ -88,7 +88,9 @@ print, 'Converting new cube ' + string(runs) + ' to array...'
 new_cube = new_cube.toArray(/TRANSPOSE, /NO_COPY)
 print, 'New cube converted to array! Cropping...'
 
+; Crop rows
 if dither_folder eq '/dith1/' then new_cube=new_cube[547-250:547+249,*,*] else new_cube=new_cube[1475-250:1475+249,*,*]
+; Crop cols
 if side_folder eq output_folder + '/processed_left/' then new_cube=new_cube[*,701-250:701+249,*] else new_cube=new_cube[*,259-250:259+249,*] 
 
 print, 'Cropped new cube! Writing FITS...'
