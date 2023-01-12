@@ -8,6 +8,7 @@ pro dewarp, dir, obj
 ; obj: string observed object name
 ;
 ; RETURNS: None, but will write two dewarped datacubes to dir (one for the left side and one for the right)
+; AUTHOR: Gabe Weible, Jan 2023, Undisclosed location
 
 COMPILE_OPT IDL2; Strictarr, 32 bit integers by default
 
@@ -20,7 +21,7 @@ restore,filename = dir + obj + '_parang.sav'
 oldangles = temporary(angles)
 frames = (size(obj_cube))[3]
 
-for run=1,2 do begin; Only need 2 runs because we haven't split the data yet
+for run=1,2 do begin; Only need 2 runs because we haven't split the data yet, so just sx and dx runs
    print, 'Starting run: ' + string(run)
    ; different coefficient matrices for each mirror, side keeps track of which side we want to
    ; dewarp for the current run
@@ -58,79 +59,19 @@ for run=1,2 do begin; Only need 2 runs because we haven't split the data yet
    new_cube=list()
    angles=list()
    
-   ; Manually set depending on which side the first frame is on, to be compared with the side variable
-   mirror = 'sx'; I think that we start on the left?
-   
-;-------------------------------------------------------------------------------------------------------
-
-   ; First frame
-   print, 'Working on frame: 1 / ' + string(frames)
-   warped=obj_cube[*,*,0]
-   padded = [pad, warped[], pad, ]
-   flag = flags[0]
-   next_flag = flags[1]
-
-   if side eq 'left' and mirror eq 'sx' then begin
-      dewarped = POLY_2D(warped, Kx, Ky)
-      new_cube.Add, [[dewarped]]
-      angles.Add, oldangles[0]
-   endif
-
-   if side eq 'right' and mirror eq 'dx' then begin
-      dewarped = POLY_2D(warped, Kx, Ky)
-      new_cube.Add, [[dewarped]]
-      angles.Add, oldangles[0]
-   endif
-
-   if next_flag ne flag then begin; Switch sides to the other mirror (if header flag is going to switch)
-      if mirror eq 'dx' then mirror='sx' else mirror='dx'
-   endif
-   
-;--------------------------------------------------------------------------------------------------------
-
-   ; Middle frames
-   for ii=1, frames-2 do begin
+   for ii=0, frames-1 do begin
      print, 'Working on frame: ' + string(ii + 1) + ' / ' + string(frames)
+     
      ;Grab a frame from our cube to work on
      warped = obj_cube[*,*,ii]
-     flag = flags[ii]
-     next_flag = flags[ii+1]
+     padded = replicate(!VALUES.F_NAN, (size(warped))[0], (size[warped])[1]+1024)
+     dewarped = POLY_2D(padded, Kx, Ky)
      
-     if side eq 'left' and mirror eq 'sx' then begin
-        dewarped = POLY_2D(warped, Kx, Ky)
-        new_cube.Add, [[dewarped]]
-        angles.Add, oldangles[ii]
-     endif
+     new_cube.Add, [[dewarped]]
+     angles.Add, oldangles[ii]
+     
+   endfor; ii for
 
-     if side eq 'right' and mirror eq 'dx' then begin
-        dewarped = POLY_2D(warped, Kx, Ky)
-        new_cube.Add, [[dewarped]]
-        angles.Add, oldangles[ii]
-     endif
-     if next_flag ne flag then begin; Switch sides to the other mirror (header tells us this)
-        if mirror eq 'dx' then mirror='sx' else mirror='dx'
-     endif
-   endfor; Middle frames for
-   
-;--------------------------------------------------------------------------------------------------------
-
-   ; Last frame
-   print, 'Working on frame: ' + string(frames) + ' / ' + string(frames)
-   warped = obj_cube[*,*,frames-1]
-   flag = flags[frames-1]
-   
-   if side eq 'left' and mirror eq 'sx' then begin
-      dewarped = POLY_2D(warped, Kx, Ky)
-      new_cube.Add, [[dewarped]]
-      angles.Add, oldangles[frames-1]
-   endif
-   
-   if side eq 'dx' then begin
-      dewarped = POLY_2D(warped, Kx, Ky)
-      new_cube.Add, [[dewarped]]
-      angles.Add, oldangles[frames-1]
-   endif
-   
 ;--------------------------------------------------------------------------------------------------------
 
    print, 'Converting new cube ' + string(run) + ' to array...'
