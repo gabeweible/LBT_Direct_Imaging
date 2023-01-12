@@ -1,32 +1,36 @@
 pro dewarp, dir, obj
 
 ; PURPOSE: dewarps LBTI LMIRCAM images using coefficients Kx_dx, Ky_dx, Kx_sx, and Ky_sx (update, if needed)
-; for two-mirror, non-interferometric observations, splitting data into left and right sides.
+; for two-mirror, non-interferometric observations, resulting in two new cubes being written, one that was
+; dewarped with the sx mirror coefficients, and the other with the dx mirror coefficients, which then will
+; need to be differentiated in split.pro.
 ;
 ; ARGUMENTS:
-; dir: string directory to find the skysub cube to read in and to write our dewarped cube to
-; obj: string observed object name
+; dir: string directory to find the sky-subtraced cube to read in and for writing our dewarped cubes to
+; obj: string target object name (probably just the host star if directly imaging an exoplanet or exoplanets
+; (or brown dwarfs! :))
 ;
-; RETURNS: None, but will write two dewarped datacubes to dir (one for the left side and one for the right)
+; RETURNS: None, but will write two dewarped datacubes to dir (one for the sx mirror and one for the dx mirror)
 ; AUTHOR: Gabe Weible, Jan 2023, Undisclosed location
 
 COMPILE_OPT IDL2; Strictarr, 32 bit integers by default
+newline = string(10B)
 
 ; dir =  '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/'
 ; obj = 'HII1348'
 
 ; Setup
-obj_cube = readfits(dir + obj + '_cube_skysub.fits')
-restore,filename = dir + obj + '_parang.sav'
+obj_cube = readfits(dir + obj + '_cube_skysub.fits') ; Read in our sky-subtracted cube to dewarp
+restore,filename = dir + obj + '_parang.sav'; Restore angles
 oldangles = temporary(angles)
-frames = (size(obj_cube))[3]
+frames = (size(obj_cube))[3]; Total # of images in each datacube
 
-for run=1,2 do begin; Only need 2 runs because we haven't split the data yet, so just sx and dx runs
+; 2 runs because we haven't split the data yet, but do have two mirrors with separate distortion coefficients
+for run = 1,2 do begin
    print, 'Starting run: ' + string(run)
-   ; different coefficient matrices for each mirror, side keeps track of which side we want to
-   ; dewarp for the current run
+   ; different previously-calculated distortion coefficient matrices for each mirror
    if run eq 1 then begin
-      side = 'left'
+      mirror = 'sx'
 
       Kx = [[-7.96016109e+00, 9.26584096e-03, -7.93676069e-06, 5.13414639e-10],$
          [1.02925896e+00, -1.59974177e-05, 9.57769272e-09, -1.14409822e-12],$
@@ -40,7 +44,7 @@ for run=1,2 do begin; Only need 2 runs because we haven't split the data yet, so
    endif
    
    if run eq 2 then begin
-      side = 'right'
+      mirror = 'dx'
 
       Kx = [[-1.13034544e+01, 1.45852226e-02, -1.13372175e-05, 1.32602063e-09],$
  	  [1.03220943e+00, -1.93058980e-05, 1.55798844e-08, -3.86115281e-12],$
@@ -61,10 +65,12 @@ for run=1,2 do begin; Only need 2 runs because we haven't split the data yet, so
    
    for ii=0, frames-1 do begin
      print, 'Working on frame: ' + string(ii + 1) + ' / ' + string(frames)
+     print, 'side
      
      ;Grab a frame from our cube to work on
      warped = obj_cube[*,*,ii]
      padded = replicate(!VALUES.F_NAN, (size(warped))[0], (size[warped])[1]+1024)
+     padded[]
      dewarped = POLY_2D(padded, Kx, Ky)
      
      new_cube.Add, [[dewarped]]
@@ -77,7 +83,7 @@ for run=1,2 do begin; Only need 2 runs because we haven't split the data yet, so
    print, 'Converting new cube ' + string(run) + ' to array...'
    new_cube = new_cube.toArray(/TRANSPOSE, /NO_COPY)
    print, 'New cube converted to array! Writing cube...'
-   writefits, dir+'dewarped_'+side+'.fits', new_cube
+   writefits, dir+'dewarped_'+mirror+'.fits', new_cube
    print, 'Cube written!'
 
 endfor; run for
