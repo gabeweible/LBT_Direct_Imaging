@@ -2,22 +2,23 @@ pro split, obj, output_folder
 ;'HII1348', '~/OneDrive/Research/HII1348/testing/' for current testing
 COMPILE_OPT IDL2
 
-for runs=1,4 do begin; I think this is the first time that the runs matter...
-; Setup (we don't need to read in the obj_cube or angles/oldangles multiple times)
-print, 'Starting run: ' + string(runs) + ' , reading fits and retoring flags and angles'
 obj_cube=readfits(output_folder+obj+'_cube_skysub.fits')
 restore,filename=output_folder+obj+'_parang.sav'
 oldangles=temporary(angles)
 frames=(size(obj_cube))[3]
 
-   ; Runs 1 and 3
-   if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
-   ; Runs 1 and 2
-   if runs lt 3 then begin
-      side_folder = output_folder + '/processed_left/'
-   endif else begin
-      side_folder = output_folder + '/processed_right/'
-   endelse
+for runs=1,4 do begin; I think this is the first time that the runs matter...
+; Setup
+print, 'Starting run: ' + string(runs)
+
+; Runs 1 and 3
+if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
+; Runs 1 and 2
+if runs lt 3 then begin
+   side_folder = output_folder + '/processed_left/'
+endif else begin
+   side_folder = output_folder + '/processed_right/'
+endelse
 
 print, "Everything is loaded, let's split!"
 ;fpnod=300./coadd
