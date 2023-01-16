@@ -21,7 +21,7 @@ newline = string(10B)
 
 ; Setup
 obj_cube = readfits(dir + obj + '_cube_skysub.fits') ; Read in our sky-subtracted cube to dewarp
-restore,filename = dir + obj + '_parang.sav'; Restore angles
+restore, filename = dir + obj + '_parang.sav'; Restore angles
 oldangles = temporary(angles)
 frames = (size(obj_cube))[3]; Total # of images in each datacube
 
@@ -60,8 +60,8 @@ for run = 1,2 do begin
    print,"Everything's loaded in - let's dewarp!"
    
    ; Initialize lists for our cube and angles
-   new_cube=list()
-   angles=list()
+   new_cube = list()
+   angles = list()
    
    for ii=0, frames-1 do begin
      print, 'Working on frame: ' + string(ii + 1) + ' / ' + string(frames)
