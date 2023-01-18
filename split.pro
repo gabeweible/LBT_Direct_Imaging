@@ -1,30 +1,38 @@
 pro split, obj, output_folder
 ;'HII1348', '~/OneDrive/Research/HII1348/testing/' for current testing
 COMPILE_OPT IDL2
+newline = string(10B)
 
-obj_cube=readfits(output_folder+obj+'_cube_skysub.fits')
-restore,filename=output_folder+obj+'_parang.sav'
-oldangles=temporary(angles)
-frames=(size(obj_cube))[3]
+sx_cube = readfits(output_folder + obj + '_dewarped_SX.fits')
+dx_cube = readfits(output_folder + obj + '_dewarped_DX.fits')
 
-for runs=1,4 do begin; I think this is the first time that the runs matter...
+restore, filename = output_folder + obj + '_parang.sav'
+oldangles = temporary(angles)
+frames = (size(sx_cube))[3]; Will be the same for both cubes
+
+for run = 1,4 do begin; Splitting into 4 quadrants (2 mirrors, 2 nods)
 ; Setup
-print, 'Starting run: ' + string(runs)
+print, 'Starting run: ' + string(run)
 
 ; Runs 1 and 3
-if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
+if run mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
 ; Runs 1 and 2
-if runs lt 3 then begin
+if run lt 3 then begin
+	; here "left" is the SX mirror, unrelated to the nodding
    side_folder = output_folder + '/processed_left/'
+   obj_cube = sx_cube
 endif else begin
+	; here "right" is the DX mirror, unrelated to the nodding
    side_folder = output_folder + '/processed_right/'
+   obj_cube = dx_cube
 endelse
 
-print, "Everything is loaded, let's split!"
+print, "Everything is loaded, let's split!" + newline
 ;fpnod=300./coadd
 
-;I think that this might just need to be manually set depending on which side your first frame is on...
-side=0;originally 0, let's try 1?
+; I think that this might just need to be manually set depending on which side 
+; the first frame is on (nodding side, not mirror bc we have both all the time)
+side=0;originally 0
 
 new_cube=list()
 angles=list()
@@ -89,10 +97,19 @@ print, 'Converting new cube ' + string(runs) + ' to array...'
 new_cube = new_cube.toArray(/TRANSPOSE, /NO_COPY)
 print, 'New cube converted to array! Cropping...'
 
-; Crop rows
-if dither_folder eq '/dith1/' then new_cube=new_cube[547-250:547+249,*,*] else new_cube=new_cube[1475-250:1475+249,*,*]
-; Crop cols
-if side_folder eq output_folder + '/processed_left/' then new_cube=new_cube[*,701-250:701+249,*] else new_cube=new_cube[*,259-250:259+249,*] 
+; Cropping columns (differentiate between the 2 nods)
+if dither_folder eq '/dith1/' then BEGIN
+	new_cube = new_cube[547-250:547+249, *, *]; nod on left of frame
+endif else BEGIN
+	new_cube = new_cube[1475-250:1475+249, *, *]; nod on right of frame
+ENDELSE
+
+; Cropping rows (differentiate between the two mirrors)
+if side_folder eq output_folder + '/processed_left/' then begin
+	new_cube = new_cube[*, 701-250:701+249, *]; top PSF (from SX mirror)
+endif else BEGIN
+	new_cube = new_cube[*, 259-250:259+249, *]; bottom PSF (from DX mirror)
+endelse
 
 print, 'Cropped new cube! Writing FITS...'
 
