@@ -14,9 +14,9 @@ for run = 1,4 do begin; Splitting into 4 quadrants (2 mirrors, 2 nods)
 ; Setup
 print, 'Starting run: ' + string(run)
 
-; Runs 1 and 3
+; run 1 and 3
 if run mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
-; Runs 1 and 2
+; run 1 and 2
 if run lt 3 then begin
 	; here "left" is the SX mirror, unrelated to the nodding
    side_folder = output_folder + '/processed_left/'
@@ -41,6 +41,10 @@ angles=list()
 ; First frame
 print, 'Working on frame: 1 / ' + string(frames)
 newframe=obj_cube[*,*,0]
+
+; crop back to center stripe
+newframe = newframe[*, 512:1535]
+
 flag = flags[0]
 next_flag = flags[1]
 if dither_folder eq '/dith1/' and not side then begin
@@ -61,6 +65,10 @@ for ii=1, frames-2 do begin
   print, 'Working on frame: ' + string(ii + 1) + ' / ' + string(frames)
   ;Grab a frame from our cube to work on
   newframe = obj_cube[*,*,ii]
+  
+  ; crop back to center stripe
+  newframe = newframe[*, 512:1535]
+  
   flag = flags[ii]
   next_flag = flags[ii+1]
   if dither_folder eq '/dith1/' and not side then begin
@@ -81,6 +89,10 @@ endfor
 print, 'Working on frame: ' + string(frames) + ' / ' + string(frames)
 ;Grab a frame from our cube to work on
 newframe = obj_cube[*,*,frames-1]
+
+; crop back to center stripe
+newframe = newframe[*, 512:1535]
+
 flag = flags[frames-1]
 if dither_folder eq '/dith1/' and not side then begin
    ;print, 'success'
@@ -93,7 +105,7 @@ if dither_folder eq '/dith2/' and side then begin
 endif ;dith2 side = 1 if
 
 
-print, 'Converting new cube ' + string(runs) + ' to array...'
+print, 'Converting new cube ' + string(run) + ' to array...'
 new_cube = new_cube.toArray(/TRANSPOSE, /NO_COPY)
 print, 'New cube converted to array! Cropping...'
 
@@ -120,8 +132,8 @@ angles = angles.toArray(/TRANSPOSE, /NO_COPY)
 print, 'Angles converted to array! Saving angles...'
 
 save,filename=side_folder+dither_folder+obj+'_parang.sav',angles
-print, 'Angles saved! Finished with run: ' + string(runs)
+print, 'Angles saved! Finished with run: ' + string(run)
 
-endfor; runs for
+endfor; run for
 print, 'Done.'
 end

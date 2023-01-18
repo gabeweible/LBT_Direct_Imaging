@@ -1,4 +1,6 @@
-pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct, do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert, silent=silent
+pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct,$
+	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert,$
+	silent=silent
 ; silent will supress all the "Rotating by ..." prints.
 compile_opt idl2
 newline = string(10B)
@@ -18,10 +20,12 @@ endelse
 
 
 if use_injection then begin
-   obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +   '_cube_skysub_cen_clean_inj.fits')
+   obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +$
+   	'_cube_skysub_cen_clean_inj.fits')
    inj_string = '_inj'
 endif else begin
-   obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +   '_cube_skysub_cen_clean.fits')
+   obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +$
+   	'_cube_skysub_cen_clean.fits')
    inj_string = ''
 endelse
 
