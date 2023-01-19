@@ -171,14 +171,17 @@ if pre_inj eq 1 then begin
    	planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_y=planet_y,$
    	planet_x=planet_x, use_gauss=use_gauss, silent=silent
    
-   ;Change output folder manually in rotate.pro and klip.pro !!!!!!!!!!!!!!! (right now as long as it's testing_coadd_ whatever it's fine)
-   ; I'm having trouble with find_sources here. (Everything is working now, but note that I might need to adjust the correction
-   ; factor to get acurate values)
-   ;klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
-   ;	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
-   ;	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-    ;  annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
-     ; theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
+   ; Change output folder manually in adi.pro and klip.pro !!!!!!!!!!!!!!! 
+   ; (right now as long as it's macbook_<coadd> it's fine)
+   
+   ; I'm having trouble with find_sources here. (Everything is working now, but
+   ; note that I might need to adjust the correction factor to get acurate values)
+   
+   ; klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
+   ; do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
+   ; klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
+   ; annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
+   ; theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
    
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
@@ -213,6 +216,7 @@ endif
 
 ;-----------------------------------[ El Fin ]--------------------------------------
 
-print, 'Completed reduction in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'; 1440 minutes per day (Julian dates are measured in days)
+; 1440 minutes per day (Julian dates are measured in days)
+print, 'Completed reduction in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
 
 end; That's all, folks!
