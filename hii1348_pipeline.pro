@@ -1,8 +1,8 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y,$
 	contrast=contrast, pre_inj=pre_inj, neg_inj=neg_inj, trial=trial,$
-   outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert
+   outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert, ssh=ssh
 
-; hii1348_pipeline, pre_inj=1, neg_inj=0, uncert=0 for normal use
+; hii1348_pipeline, pre_inj=1, neg_inj=0, uncert=0, ssh=0 for normal use
 
 ; Strict arrays (square brackets only) and 32-bit integers as default, instead of 16
 compile_opt IDL2
@@ -15,10 +15,12 @@ start_time = systime(/JULIAN)
 
 ; General/Combine Parameters
 obj = 'HII1348'
-raw_path = '/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
+raw_path = '/Users/gabe/Data/HII1348/raw'
+;'/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 cube_start_frame = 0
 coadd = 25
-output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
+output_path = '/Users/gabe/reduction/macbook_'+strcompress(coadd, /r) + '/'
+;'/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
 	strcompress(coadd, /r) + '/'
 if keyword_set(outpath) then output_path=outpath
 
@@ -172,20 +174,21 @@ if pre_inj eq 1 then begin
    	planet_x=planet_x, use_gauss=use_gauss, silent=silent
    
    ; Change output folder manually in adi.pro and klip.pro !!!!!!!!!!!!!!! 
-   ; (right now as long as it's macbook_<coadd> it's fine)
+   ; (right now as long as it's macbook_<coadd> it's fine, and ssh is set
+   ; appropriately)
    
    ; I'm having trouble with find_sources here. (Everything is working now, but
    ; note that I might need to adjust the correction factor to get acurate values)
    
-   ; klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
-   ; do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
-   ; klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-   ; annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
-   ; theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
+   klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
+    do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
+    klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
+    annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
+    theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj, ssh=ssh
    
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
-   	silent=silent
+   	silent=silent, ssh=ssh
    
 endif
 if pre_inj eq 0 then begin
@@ -202,15 +205,15 @@ if pre_inj eq 0 then begin
         use_gauss=use_gauss
    endif
 
-   ;klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
-   ;	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
-   ;	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-    ;  annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
-     ; theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj
+   klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
+   	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
+   	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
+      annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
+      theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj, ssh=ssh
 
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
-   	silent=silent
+   	silent=silent, ssh=ssh
    
 endif
 

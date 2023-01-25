@@ -10,12 +10,12 @@ newline = string(10B)
 ; Going being 2.0 and with more increments to see if that improves our results at all (though this will take longer to run, to be sure)
 separations=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5]; Arcsec
 pas=findgen(18)*20. + 5. ; Position angles, 18 of them all separated by 20 deg starting at 5 deg
-threshold=5.; Sigma?
+threshold=5.; Sigma
 pxscale=0.0107; Plate scale for our observations [arcsec/px]
 contrast_guess=0.005 ;guess at the starting point for the contrast curve
 
 ; Where to find our files and put the results
-output_path = '/Users/gabe/reduction/testing_coadd_25/'
+output_path = '/Users/gabe/reduction/macbook_25/'
 
 ; Rotate/KLIP parameters (needed to read in our total_klip file)
 bin = 3
@@ -67,7 +67,8 @@ for n=0,n_elements(separations)-1 do begin
 		;perform reduction
 		;name='S37'
 		;reduce_near,rho=rho,theta=theta,contrast=contrast,/block_burn,aa=aa,bb=bb,ab=ab,ba=ba
-		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj_stuff=0
+		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj_stuff=0,$
+			ssh=1, uncert=0
 		
 		;read image
 		image=readfits(strcompress(output_path + 'combined/' + 'HII1348' + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_total_klip.fits', /rem))
