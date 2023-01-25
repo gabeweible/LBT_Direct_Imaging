@@ -1,0 +1,2 @@
+# direct_imaging_pipeline
+Various IDL procedures as part of a direct imaging data reduction and analysis pipeline. This pipeline is based off of work by Dr. Kevin Wagner and Dr. Daniel Apai of Steward Observatory, but has been heavily modified, refactored, and extended to fit my work. This is a work-in-progress and not intended to be any sort of standalone package. Currently, I am using this to reduce LBTI direct imaging data of HII 1348.
