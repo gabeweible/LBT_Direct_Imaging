@@ -3,6 +3,7 @@
 
 # Vim temp files
 *.swp
+*.swo
 
 # Redundant - deprecated - useless
 am.pro
