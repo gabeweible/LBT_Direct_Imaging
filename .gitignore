@@ -1,0 +1,17 @@
+# OS junk
+*.DS_Store
+
+# Vim temp files
+*.swp
+
+# Redundant - deprecated - useless
+am.pro
+coadd_test.pro
+contrastcurve_HII1348.pro
+create_test.pro
+dewarp_test.pro
+loop_test.pro
+my_HII1348.pro
+photo_test.pro
+quick_script.pro
+wave_packet.pro
