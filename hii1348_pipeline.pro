@@ -15,11 +15,11 @@ start_time = systime(/JULIAN)
 
 ; General/Combine Parameters
 obj = 'HII1348'
-raw_path = '/Users/gabe/Data/HII1348/raw'
+raw_path = '/Users/gabeweible/OneDrive/reasearch/kevin/raw'
 ;'/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 cube_start_frame = 0
 coadd = 25
-output_path = '/Users/gabe/reduction/macbook_'+strcompress(coadd, /r) + '/'
+output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' + strcompress(coadd, /r) + '/'
 ;'/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
 ;	+ strcompress(coadd, /r) + '/'
 if keyword_set(outpath) then output_path=outpath
@@ -52,7 +52,7 @@ pxscale=0.0107 ;arcsec/pixel
 if (keyword_set(rho) and keyword_set(theta)) or (keyword_set(planet_x) and keyword_set(planet_y)) then begin
    use_injection=1
 endif else begin
-   use_injeciton=0
+   use_injection=0
 endelse
 if keyword_set(use_gauss) then use_gauss=[use_gauss]
 if keyword_set(rho) then planet_theta=[theta]
@@ -64,7 +64,6 @@ if keyword_set(contrast) then begin
 	if keyword_set(rho) then n_planets=n_elements(planet_r)
 	if keyword_set(planet_x) then n_planets=n_elements(planet_x)
 endif
-
 
 ; ADI/KLIP parameters (after testing/refinement)
 if not keyword_set(use_gauss) then use_gauss=1
@@ -123,13 +122,13 @@ endif
 if use_injection and not neg_inj then begin; Custom annulus inner and outer radii for artificial injections at arbitrary locations
    annmode=1
    ;Thicc rings
-   annmode_inout=round([max([0.,planet_r/pxscale-25.+1.]),planet_r/pxscale+25.+2.])
-   if annmode_inout[1] gt 16 then BEGIN
-   	annmode_inout=round([max([0.,planet_r/pxscale-30.+1.]),planet_r/pxscale+30.+2.])
-   endif
+   ;annmode_inout=round([max([0.,planet_r/pxscale-25.+1.]),planet_r/pxscale+25.+2.])
+   ;if annmode_inout[1] gt 16 then BEGIN
+   	;nnmode_inout=round([max([0.,planet_r/pxscale-30.+1.]),planet_r/pxscale+30.+2.])
+   ;endif
    ; Thinn rings
-   ;annmode_inout=round([max([0.,planet_r/pxscale-10.+1.]),planet_r/pxscale+10.+2.])
-   ;if annmode_inout[1] gt 16 then annmode_inout=round([max([0.,planet_r/pxscale-12.+1.]),planet_r/pxscale+12.+2.])
+   annmode_inout=round([max([0.,planet_r/pxscale-10.+1.]),planet_r/pxscale+10.+2.])
+   if annmode_inout[1] gt 16 then annmode_inout=round([max([0.,planet_r/pxscale-12.+1.]),planet_r/pxscale+12.+2.])
 endif
 
 wr=fix(250./float(nrings))
