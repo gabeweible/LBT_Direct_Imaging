@@ -15,7 +15,7 @@ pxscale=0.0107; Plate scale for our observations [arcsec/px]
 contrast_guess=0.005 ;guess at the starting point for the contrast curve
 
 ; Where to find our files and put the results
-output_path = '/Users/gabe/reduction/macbook_25/'
+output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/'
 
 ; Rotate/KLIP parameters (needed to read in our total_klip file)
 bin = 3
@@ -67,11 +67,10 @@ for n=0,n_elements(separations)-1 do begin
 		;perform reduction
 		;name='S37'
 		;reduce_near,rho=rho,theta=theta,contrast=contrast,/block_burn,aa=aa,bb=bb,ab=ab,ba=ba
-		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj_stuff=0,$
-			ssh=1, uncert=0
+		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj=0, uncert=0, neg_inj=0
 		
 		;read image
-		image=readfits(strcompress(output_path + 'combined/' + 'HII1348' + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_total_klip.fits', /rem))
+		image=readfits(strcompress(output_path + 'combined/' + 'HII1348' + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_0' + '_total_klip.fits', /rem))
 
 		;remove zeros
 		image[where(image eq 0)]=!values.f_nan

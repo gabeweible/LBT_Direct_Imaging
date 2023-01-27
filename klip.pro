@@ -2,11 +2,8 @@ pro klip, obj, cube_folder, use_injection, do_destripe, filter, bin, bin_type,$
  do_hyper, do_annmode, combine_type, klip_fraction, start_frame, end_frame, fill,$
   k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout, suffix, ct,$
    do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast, trial=trial,$
-    fs=fs, neg_inj=neg_inj, ssh=ssh
+    fs=fs, neg_inj=neg_inj
 newline = string(10B)
-
-if ssh eq 0 then path='/Users/gabeweible/OneDrive/research/HII1348/macbook_'
-if ssh eq 1 then path='/Users/gabe/research/macbook_'
 
 for runs=1,4 do begin
 
@@ -213,18 +210,18 @@ klipframe=medframe
    
    if runs eq 4 then begin
       e = mean(nods, dim=3)
-      writefits, strcompress(path + string(coadd) + '/combined/' + obj + '_total_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+      writefits, strcompress(cube_folder + 'combined/' + obj + '_total_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
 
       e = mean(nods[*,*,0:1], dim=3)
-      writefits, strcompress(path + string(coadd) + '/combined/' + obj + '_left_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+      writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
 
       e = mean(nods[*,*,2:3], dim=3)
-      writefits, strcompress(path + string(coadd) + '/combined/' + obj + '_right_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+      writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
 
       ;used to combine injections from both nights for improved SNR. Manually set to inj for now.
       e = mean(nods, dim=3)
 
-      super_suffix = path + string(coadd) + '/combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
+      super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
       if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
 
       writefits, strcompress(super_suffix +   '_total_klip.fits', /rem), e
