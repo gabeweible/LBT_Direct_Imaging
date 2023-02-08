@@ -69,7 +69,7 @@ endif
 if not keyword_set(use_gauss) then use_gauss=1
 silent=1; Don't print so much in adi.pro "Rotating by ..."
 norm = 1; Normalize ADI frames to reduce residuals around the star
-fs = 0; Run find_sources within ADI.pro
+fs = 1; Run find_sources within ADI.pro
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
 do_destripe = 1
 filter = 17.

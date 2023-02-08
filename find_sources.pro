@@ -68,8 +68,8 @@ frame[where(frame le 0. and frame ge 0.)]=!values.f_nan
 
 
 
-;close,1; commented out because of writing to .txt error
-;openw,1,location+name+ '_sources.txt',width=400; commented out because of writing to .txt error
+close,1
+openw,1,location+name+ '_sources.txt',width=400
 
 
 
@@ -900,10 +900,11 @@ endif
 
 ;	cgcleanup
 
-;close, 1; Commented out because of writing to txt error
+close, 1
 
 
 
 
 
 end
+

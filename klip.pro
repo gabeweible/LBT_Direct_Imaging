@@ -235,7 +235,7 @@ klipframe=medframe
       if keyword_set(fs) then begin
 	print, 'FS = ', fs
       	if fs eq 1 then begin
-         find_sources,strcompress(super_suffix +   '_total_klip.fits',/rem),reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,filter=filter,do_cen_filter=do_cen_filter
+         find_sources,strcompress(super_suffix +   '_total_klip.fits',/rem),reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,filter=filter
         endif; find_sources if
       endif; keyword_set(fs) if
       size = 500.
