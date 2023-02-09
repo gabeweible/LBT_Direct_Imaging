@@ -1,6 +1,7 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y,$
 	contrast=contrast, pre_inj=pre_inj, neg_inj=neg_inj, trial=trial,$
-   outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert
+   outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert, klip=klip,$
+   fs=fs
 
 ; hii1348_pipeline, pre_inj=1, neg_inj=0, uncert=0, ssh=0 for normal use
 
@@ -69,7 +70,10 @@ endif
 if not keyword_set(use_gauss) then use_gauss=1
 silent=1; Don't print so much in adi.pro "Rotating by ..."
 norm = 1; Normalize ADI frames to reduce residuals around the star
-fs = 1; Run find_sources within ADI.pro
+
+;fs = 1; Run find_sources within ADI.pro; Set in a kwarg now...
+if not keyword_set(fs) then fs=0
+
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
 do_destripe = 1
 filter = 17.
@@ -122,13 +126,13 @@ endif
 if use_injection and not neg_inj then begin; Custom annulus inner and outer radii for artificial injections at arbitrary locations
    annmode=1
    ;Thicc rings
-   ;annmode_inout=round([max([0.,planet_r/pxscale-25.+1.]),planet_r/pxscale+25.+2.])
-   ;if annmode_inout[1] gt 16 then BEGIN
-   	;nnmode_inout=round([max([0.,planet_r/pxscale-30.+1.]),planet_r/pxscale+30.+2.])
-   ;endif
+   annmode_inout=round([max([0.,planet_r/pxscale-25.+1.]),planet_r/pxscale+25.+2.])
+   if annmode_inout[1] gt 16 then BEGIN
+   	nnmode_inout=round([max([0.,planet_r/pxscale-30.+1.]),planet_r/pxscale+30.+2.])
+   endif
    ; Thinn rings
-   annmode_inout=round([max([0.,planet_r/pxscale-10.+1.]),planet_r/pxscale+10.+2.])
-   if annmode_inout[1] gt 16 then annmode_inout=round([max([0.,planet_r/pxscale-12.+1.]),planet_r/pxscale+12.+2.])
+   ;annmode_inout=round([max([0.,planet_r/pxscale-10.+1.]),planet_r/pxscale+10.+2.])
+   ;if annmode_inout[1] gt 16 then annmode_inout=round([max([0.,planet_r/pxscale-12.+1.]),planet_r/pxscale+12.+2.])
 endif
 
 wr=fix(250./float(nrings))
@@ -179,11 +183,13 @@ if pre_inj eq 1 then begin
    ; I'm having trouble with find_sources here. (Everything is working now, but
    ; note that I might need to adjust the correction factor to get acurate values)
    
+   if klip eq 1 then begin
    klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
     do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
     klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
     annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
     theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
+   endif
    
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
@@ -204,14 +210,16 @@ if pre_inj eq 0 then begin
         use_gauss=use_gauss
    endif
 
+	if klip eq 1 then begin
    klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
    	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
       annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
       theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj
-
+	endif
+	
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
-   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
+   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert,$
    	silent=silent
    
 endif
