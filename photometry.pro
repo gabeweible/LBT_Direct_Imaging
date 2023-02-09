@@ -104,8 +104,10 @@ hc = 0.016 & hw = 0.4
 x_avg = 277.713 & y_avg = 353.174
 con = -0.00909305
 ; Loop until we're within BOTH of our thresholds
-i = 2
+i = 1
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
+
+file_mkdir, strcompress(string(i), /r)
 
 ; Define lower bounds, upper bounds, and step sizes for our nested loops (grid search)
 x_i = x_avg-hw & x_f = x_avg+hw
@@ -122,7 +124,7 @@ x_loop = [x_i : x_f : x_step]
 y_loop = [y_i : y_f : y_step]
 c_loop = [c_i : c_f : c_step]
 
-trial=100*(i-1); Keep track of which run we're on, separate i values by 100
+trial=0; Keep track of which run we're on for a given i-value
 foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
@@ -174,9 +176,9 @@ foreach xx, x_loop do begin; Loop over x
       
      	   ; Save our results (in the loop)
      	   print, 'Saving...'
-     	   save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
+     	   save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
      	   print, 'Done.'+newline+'Writing FITS...'
-     	   writefits, strcompress(output_path+'photometry/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
+     	   writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
      	   print, 'Done.'+newline+'Incrementing trial...'
      	   trial += 1
      	   print, 'Done.'
@@ -191,8 +193,8 @@ save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_whil
 
 ; Combine all of the trials into a cube and write it to the same folder
 print, newline, 'Saving the trials into one FITS cube'
-folder_cube, strcompress(output_path+'photometry/', /r),$
-	save_path=strcompress(output_path+'photometry/while_'+string(i)+'_', /r)
+folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
+	save_path=strcompress(output_path+'photometry/'+string(i)+'/while_'+string(i)+'_', /r)
 	
 print, 'FITS cube created! Starting analysis', newline
 
