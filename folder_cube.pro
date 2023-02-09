@@ -1,4 +1,4 @@
-pro folder_cube, find_path, save_path, type
+pro folder_cube, find_path, save_path=save_path, type=type
 ; Searches for all .FITS files in find_path (string), then combines them into a cube written to
 ; save_path (string)
 ; type is 'list' or 'array'
@@ -15,6 +15,9 @@ print, 'Searching for FITS files in', find_path, '...'
 cd, find_path; change directories to where we're looking for FITS files
 files = FILE_SEARCH('*.fits', COUNT=filecount)
 print, 'Found ', filecount, ' FITS files!'
+
+if not keyword_set(save_path) then save_path = find_path
+if not keyword_set(type) then type = 'list'
 
 ; Use lists to take advantage of faster appending over arrays (we'll convert back to arrays later)
 print, 'Initializing...'
