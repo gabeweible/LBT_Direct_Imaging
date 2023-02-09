@@ -159,6 +159,8 @@ endfor ;n
 curves=[ [curves], [contrasts] ]
 
 save,filename=strcompress(output_path + 'HII1348_contrast_output.sav',/rem),curves,pas,separations,threshold
+; Write curves to a CSV.
+WRITE_CSV, strcompress(output_path + 'HII1348_contrast_output.csv',/rem), curves
 
 endfor ;m
 
