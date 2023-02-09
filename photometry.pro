@@ -36,6 +36,7 @@ obj = 'HII1348'; Observed object
 
 ; Parameters needed to read in our total_klip or total_adi file after 
 ; negative injection
+klip=0 ; don't run KLIP in HII1348_pipeline.pro right now.
 bin = 3 & bin_type = 'mean' & combine_type = 'nwadi'
 k_klip = 7 & angsep= 1. & anglemax = 360. & nrings = 4.
 n_ang = 2 & do_cen_filter = 1 & filter = 17. & ct = 0.994
@@ -108,14 +109,16 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = 0.016 & hw = 0.4
-x_avg = 277.713 & y_avg = 353.174
+hc = 0.02 & hw = 0.5
+x_avg = cen_x & y_avg = cen_y
 con = -0.00909305
 ; Loop until we're within BOTH of our thresholds
 i = 1
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
 
-file_mkdir, strcompress(string(i), /r)
+file_mkdir,$
+strcompress('/Users/gabeweible/OneDrive/research/HII1348/macbook_25/photometry/'+$
+	string(i), /r)
 
 ; Define lower bounds, upper bounds, and step sizes for our nested loops (grid search)
 x_i = x_avg-hw & x_f = x_avg+hw
@@ -211,13 +214,13 @@ endforeach; xx foreach
 
 ; Save the results
 save,filename=strcompress(output_path+'photometry/'+obj+$
-	'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,
+	'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,$
 	hc,rhos,thetas
 
 ; Combine all of the trials into a cube and write it to the same folder
 print, newline, 'Saving the trials into one FITS cube'
 folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
-	save_path=strcompress(output_path+'photometry/'+string(i)+'/while_'+$
+	save_path=strcompress(output_path+'photometry/while_'+$
 	string(i)+'_', /r)
 	
 print, 'FITS cube created! Starting analysis', newline
@@ -250,9 +253,6 @@ ENDWHILE; thresholds loop
 ; Save the FINAL results
 save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
 	 /r),xxs,yys,cons,devs,means
-	 
-folder_cube, strcompress(output_path+'photometry/', /r),$
-	save_path=strcompress(output_path+'photometry/'+'final_', /r)
 
 ;-----------------------------------------------------------------------------------
 
