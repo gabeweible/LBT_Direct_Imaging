@@ -220,7 +220,7 @@ foreach xx, x_loop do begin; Loop over x
 endforeach; xx foreach
 
 ; Save the results
-save,filename=strcompress(output_path+'photometry/'+obj+$
+save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
 	'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,$
 	hc,rhos,thetas
 
