@@ -136,6 +136,9 @@ y_loop = [y_i : y_f : y_step]
 c_loop = [c_i : c_f : c_step]
 
 trial=0; Keep track of which run we're on for a given i-value
+; Instead of writing each image and then making a cube, let's just
+; make a cube from the beginning to write.
+cube = list()
 foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
@@ -195,10 +198,14 @@ foreach xx, x_loop do begin; Loop over x
      	   	'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,$
      	   	cons,devs,means,rhos,thetas,hw,hc
      	   	
-     	   print, 'Done.'+newline+'Writing FITS...'
+     	   ;print, 'Done.'+newline+'Writing FITS...'
+     	   print, 'Done.'+newline+'Adding image to cube...'
      	   
-     	   writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
-     	   	'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
+     	   ;writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
+     	   	;'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
+     	   	
+     	   ; Add image to cube instead of writing
+     	   cube.Add, [[image]]
      	   	
      	   print, 'Done.'+newline+'Incrementing trial...'
      	   trial += 1
@@ -219,9 +226,16 @@ save,filename=strcompress(output_path+'photometry/'+obj+$
 
 ; Combine all of the trials into a cube and write it to the same folder
 print, newline, 'Saving the trials into one FITS cube'
-folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
-	save_path=strcompress(output_path+'photometry/while_'+$
-	string(i)+'_', /r)
+;folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
+	;save_path=strcompress(output_path+'photometry/while_'+$
+	;string(i)+'_', /r)
+	
+
+print, 'Converting to array...'
+cube = cube.toArray(/TRANSPOSE, /NO_COPY)
+
+writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'while_'+$
+	'_cube.fits',/rem), cube
 	
 print, 'FITS cube created! Starting analysis', newline
 
