@@ -16,7 +16,7 @@
 ; as close to the actual companion to get the photometric uncertainty (divide by the mean to get a
 ; percent error)
 
-pro stdev_photometry, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gauss
+pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gauss
    ; Type is 'ADI' or 'KLIP'
    ; planet_spots is meant to be a multiple of 16 (the number that fit naturally)
 
