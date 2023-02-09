@@ -92,7 +92,8 @@ endif
 print, 'Original image read, finding companion centroid...', newline
 
 ; Calculate the centroid of the companion two ways (at least to test, for now)
-; Apparently, gcntrd is better, but slower? For now I'll take the average of the two results
+; Apparently, gcntrd is better, but slower?
+; For now, I'll take the average of the two results
 cntrd, og_image, guess[0], guess[1], XCEN, YCEN, fwhm
 print, 'CNTRD xcen, ycen:', XCEN, YCEN
 ;x_avg = XCEN & y_avg = YCEN
@@ -103,7 +104,7 @@ print, 'GCNTRD xcen, ycen:', XCEN, YCEN
 cen_x += XCEN & cen_x *= 0.5 & cen_y += YCEN & cen_y *= 0.5
 print, 'Mean xcen, ycen:', cen_x, cen_y, newline
 ; This will get us the best place to inject our planet at
-print, 'Starting loop over xx, yy around mean xcen, ycen (nx x ny px square) or overridden x_avg, y_avg...'
+print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
@@ -162,8 +163,9 @@ foreach xx, x_loop do begin; Loop over x
 ;     	         
 ;     	   endif
 ;     	   if type eq 'ADI' then begin (only real option for now)
-     	      image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+string(ct)+'filt_'+ $
-     	         string(filter)+'_neg_inj_'+string(1)+'_uncert_0_total_adi.fits',/rem))
+     	      image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+$
+     	      	string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
+     	      	'_uncert_0_total_adi.fits',/rem))
 ;     	   endif
          print, 'Read in image after negative injection'
       
@@ -177,31 +179,46 @@ foreach xx, x_loop do begin; Loop over x
      	   
      	   ; Append results to arrays
      	   print, 'Appending to arrays...'
-     	   xxs=[xxs,xx] & yys=[yys,yy] & cons=[cons,contrast] & devs=[devs,deviation] & means=[means,average]
+     	   xxs=[xxs,xx] & yys=[yys,yy]
+     	   cons=[cons,contrast] & devs=[devs,deviation]
+     	   means=[means,average]
      	   rhos=[rhos,planet_r] & thetas=[thetas,planet_theta]
      	   print, 'Done.'
       
      	   ; Save our results (in the loop)
      	   print, 'Saving...'
-     	   save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
+     	   
+     	   save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
+     	   	'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,$
+     	   	cons,devs,means,rhos,thetas,hw,hc
+     	   	
      	   print, 'Done.'+newline+'Writing FITS...'
-     	   writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
+     	   
+     	   writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
+     	   	'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
+     	   	
      	   print, 'Done.'+newline+'Incrementing trial...'
      	   trial += 1
      	   print, 'Done.'
+     	   
+     	   ; Convert to scalars so that IDL doens't throw a fit
      	   yy=yy[0]
-     	   xx=xx[0]; Convert to scalars so that IDL doens't throw a fit
+     	   xx=xx[0]
+     	   
       endforeach; contrast foreach
    endforeach; yy foreach
 endforeach; xx foreach
 
 ; Save the results
-save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,hc,rhos,thetas
+save,filename=strcompress(output_path+'photometry/'+obj+$
+	'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,
+	hc,rhos,thetas
 
 ; Combine all of the trials into a cube and write it to the same folder
 print, newline, 'Saving the trials into one FITS cube'
 folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
-	save_path=strcompress(output_path+'photometry/'+string(i)+'/while_'+string(i)+'_', /r)
+	save_path=strcompress(output_path+'photometry/'+string(i)+'/while_'+$
+	string(i)+'_', /r)
 	
 print, 'FITS cube created! Starting analysis', newline
 
@@ -213,11 +230,11 @@ print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')
 	
 print, 'Or, at (rho, theta): ('+string(pxscale * SQRT(((x_best-250.)^2.)+$
-	((y_best-250.)^2.)))+', '+string(ATAN((250.-y_best)/(250.-x_best)))+')', newline
+	((y_best-250.)^2.)))+', '+string(ATAN((250.-y_best)/(250.-x_best)))+')',newline
 	
 print,'Best trial was trial'+string(where(devs eq min(devs)))
 
-print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')', newline
+print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')',newline
 best_con = cons[WHERE(devs eq MIN(devs))]
 print, 'Contrast:', string(best_con), newline
 
@@ -231,12 +248,14 @@ ENDWHILE; thresholds loop
 
 ;-----------------------------------------------------------------------------------
 ; Save the FINAL results
-save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav', /r),xxs,yys,cons,devs,means
+save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
+	 /r),xxs,yys,cons,devs,means
+	 
 folder_cube, strcompress(output_path+'photometry/', /r),$
 	save_path=strcompress(output_path+'photometry/'+'final_', /r)
 
 ;-----------------------------------------------------------------------------------
 
-print, 'Completed photometry in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
+print, 'Completed photometry in ',(systime(/JULIAN) - start_time) * 1440.,' minutes.'
 
 end; That's all, folks!
