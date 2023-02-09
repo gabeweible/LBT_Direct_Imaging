@@ -17,41 +17,46 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-pro photometry, coadd=coadd, type=type
+pro photometry, coadd=coadd, type=type, grid_sz=grid_sz
 ; Type is 'ADI' or 'KLIP'
 
-COMPILE_OPT IDL2
-newline = string(10B)
-start_time = systime(/JULIAN); Get the current time in a Julian date format
+COMPILE_OPT IDL2; Strictarr and 32-bit ints
+newline = string(10B); Make printing newlines convenient
+; Get the current time in a Julian date format, used to print how long the
+; photometry/astrometry processing took.
+start_time = systime(/JULIAN)
 
 ;------------------------------[ Start User Input ]---------------------------------
 
 ; Where to find our files and put the results
-output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_'+strcompress(coadd,/r)+'/'
-obj = 'HII1348'
+output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_'+$
+	strcompress(coadd,/r)+'/'
+	
+obj = 'HII1348'; Observed object
 
-; Parameters needed to read in our total_klip or total_adi file
-klip = 0; Don't even run KLIP on the macbook.
+; Parameters needed to read in our total_klip or total_adi file after 
+; negative injection
 bin = 3 & bin_type = 'mean' & combine_type = 'nwadi'
 k_klip = 7 & angsep= 1. & anglemax = 360. & nrings = 4.
 n_ang = 2 & do_cen_filter = 1 & filter = 17. & ct = 0.994
 
+if ~ keyword_set(grid_sz) then grid_sz = 5; Default
+
 ; Inject_planets parameters
-uncert=0
-use_gauss = 1; Fit a gaussian to the pupil median PSF to try and get rid of the 'lobes'
-n_planets = 1
-pxscale = 0.0107 ;arcsec/pixel
-c_guess = -0.008914755; Average of last two runs -0.0097233772; From sources.txt file (and made negative)
+uncert = 0; not get uncertainties yet
+use_gauss = 1; Fit a gaussian to the pupil median PSF (more symmetric)
+n_planets = 1; Only one negative injection at a time
+; arcsec/pixel, will need to be updated after Trapezium calculations
+pxscale = 0.0107 
+; starting guess for the (negative) contrast, should be pretty close.
+c_guess = -0.008914755
 n_contrasts = 5; Number of contrasts to test at each position, ODD
-half_percent = 0.0028; +- this percent in contrast to grid search
-half_con = half_percent / 100.; Convert to a decimal
 
 ; Companion centroid guess [x,y] indices (start at 0)
 guess = [277.3, 353.5]
 fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
-nx = 5 & ny = 5
-half_width = 0.01
+nx = 5 & ny = 5 ; 5 x 5 grid for positions (both should be odd!)
 
 
 initial_hc = 0.02 ; plus or minus 2%
@@ -78,10 +83,12 @@ print, 'Reading in total ' + type +  ' image...'
 ;      '_total_klip.fits', /rem))
 ;    
 ;endif
+
 if type eq 'ADI' then begin
-   og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+'filt_'+$
-      string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
+   og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
+   'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
 endif
+
 print, 'Original image read, finding companion centroid...', newline
 
 ; Calculate the centroid of the companion two ways (at least to test, for now)
