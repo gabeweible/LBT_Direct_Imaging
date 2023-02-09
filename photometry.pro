@@ -50,13 +50,13 @@ n_planets = 1; Only one negative injection at a time
 pxscale = 0.0107 
 ; starting guess for the (negative) contrast, should be pretty close.
 c_guess = -0.008914755
-n_contrasts = 5; Number of contrasts to test at each position, ODD
+n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
 guess = [277.3, 353.5]
 fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
-nx = 5 & ny = 5 ; 5 x 5 grid for positions (both should be odd!)
+nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 
 
 initial_hc = 0.02 ; plus or minus 2%
