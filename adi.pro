@@ -100,7 +100,7 @@ if runs eq 4 then begin
    ; This line is giving me problems so I'm going to try and comment it out...Something is going wrong so that tests is undefined
    ref_file=output_folder+dither_folder+obj_name+'_pupil.fits' ;unsaturated data can just use the pupil image
    
-   if keyword_set(fs) then begin
+   if fs eq 1 then begin
    find_sources,strcompress(cube_folder + 'combined/' +obj_name + 'ct_' + string(ct) +   'filt_'  +$
   	string(filter) + '_neg_inj_' + string(neg_inj) + '_total_adi.fits',/rem),$
 	reference=output_folder+dither_folder+obj_name+ string(ct) +  '_pupil.fits',platescale=0.0107,$
