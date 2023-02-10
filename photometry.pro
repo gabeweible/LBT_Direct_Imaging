@@ -235,7 +235,7 @@ print, 'Converting to array...'
 cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 
 writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'while_'+$
-	'_cube.fits',/rem), cube
+	string(i)+'_cube.fits',/rem), cube
 	
 print, 'FITS cube created! Starting analysis', newline
 
