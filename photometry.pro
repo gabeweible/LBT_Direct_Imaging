@@ -109,11 +109,11 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = 0.02 & hw = 0.5
-x_avg = cen_x & y_avg = cen_y
-con = -0.00909305
+hc = 0.02*(0.8)^14.0 & hw = 0.5*(0.8)^14.0
+x_avg = 277.713 & y_avg = 353.151
+con = -0.00938042
 ; Loop until we're within BOTH of our thresholds
-i = 1
+i = 15
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
 
 file_mkdir,$
@@ -242,6 +242,8 @@ print, 'FITS cube created! Starting analysis', newline
 ; Print some good results
 x_best = xxs[WHERE(devs eq MIN(devs))]
 y_best = yys[WHERE(devs eq MIN(devs))]
+x_best = x_best[0]
+y_best = y_best[0]
 
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')
