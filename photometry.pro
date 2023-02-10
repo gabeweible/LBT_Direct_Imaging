@@ -68,9 +68,6 @@ hw_thresh = 0.005; (5/1000 of a px on either side, uncert is about 5/100 either 
 
 ;------------------------------[ End User Input ]---------------------------------
 
-; Initialize arrays for our results
-xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
-
 ; Default to ADI for now
 if not keyword_set(type) then type = 'ADI'
 
@@ -115,6 +112,9 @@ con = -0.00938042
 ; Loop until we're within BOTH of our thresholds
 i = 15
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
+
+; Initialize arrays for our results
+xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
 
 file_mkdir,$
 strcompress('/Users/gabeweible/OneDrive/research/HII1348/macbook_25/photometry/'+$
