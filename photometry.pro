@@ -252,13 +252,13 @@ left = 250. - x_best; x > 250 is "minus left", since it's right (px)
 up = y_best - 250.; How much above the center we are (px)
 
 ; Convert to RA and DEC with the plate scale
-RA = px_scale * left
-DEC = px_scale * up
+RA = pxscale * left
+DEC = pxscale * up
 
 print, "This is at RA:", RA, 'and DEC:', DEC
 	
 	
-rho_px = SQRT( ((x_best-250.)^2.) + ((y_best-250.)^2.)) )
+rho_px = SQRT( ((x_best-250.)^2.) + ((y_best-250.)^2.) ) 
 theta = ATAN( (y_best-250.) / (x_best-250.) )
 
 ; Convert to arcsec and PA
@@ -274,7 +274,7 @@ best_con = cons[WHERE(devs eq MIN(devs))]
 best_con = best_con[0]; make sure that we don't have multiple
 print, 'Contrast:', string(best_con), newline
 save, filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
-	'_results_trial_'+string(i)+'.sav', /r), x_best, y_best, left, up, RA, DEC,$
+	'_results_while_'+string(i)+'.sav', /r), x_best, y_best, left, up, RA, DEC,$
 	rho_px, theta, rho_arcsec, PA
 
 ; Reset stuff for the next loop iteration:
