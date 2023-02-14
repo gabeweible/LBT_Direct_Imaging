@@ -106,11 +106,11 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = 0.02*(0.8)^16.0 & hw = 0.5*(0.8)^16.0
+hc = 0.02*(0.8)^19.0 & hw = 0.5*(0.8)^19.0
 x_avg = 277.713 & y_avg = 353.151
 con = -0.00938042
 ; Loop until we're within BOTH of our thresholds
-i = 17
+i = 20
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
@@ -248,8 +248,24 @@ y_best = y_best[0]
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')
 	
-print, 'Or, at (rho, theta): ('+string(pxscale * SQRT(((x_best-250.)^2.)+$
-	((y_best-250.)^2.)))+', '+string(ATAN((250.-y_best)/(250.-x_best)))+')',newline
+left = 250. - x_best; x > 250 is "minus left", since it's right (px)
+up = y_best - 250.; How much above the center we are (px)
+
+; Convert to RA and DEC with the plate scale
+RA = px_scale * left
+DEC = px_scale * up
+
+print, "This is at RA:", RA, 'and DEC:', DEC
+	
+	
+rho_px = SQRT( ((x_best-250.)^2.) + ((y_best-250.)^2.)) )
+theta = ATAN( (y_best-250.) / (x_best-250.) )
+
+; Convert to arcsec and PA
+rho_arcsec = rho_px * pxscale
+PA = 270. + !RADEG * theta; CW from +y-axis (deg)
+
+print, 'Or, at (rho, theta): ('+string(pxscale*rho_px)+', '+string(theta)+')',newline
 	
 print,'Best trial was trial'+string(where(devs eq min(devs)))
 
@@ -257,6 +273,9 @@ print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')'
 best_con = cons[WHERE(devs eq MIN(devs))]
 best_con = best_con[0]; make sure that we don't have multiple
 print, 'Contrast:', string(best_con), newline
+save, filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
+	'_results_trial_'+string(i)+'.sav', /r), x_best, y_best, left, up, RA, DEC,$
+	rho_px, theta, rho_arcsec, PA
 
 ; Reset stuff for the next loop iteration:
 x_avg = x_best & y_avg = y_best
