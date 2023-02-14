@@ -106,11 +106,11 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = 0.02*(0.8)^14.0 & hw = 0.5*(0.8)^14.0
+hc = 0.02*(0.8)^16.0 & hw = 0.5*(0.8)^16.0
 x_avg = 277.713 & y_avg = 353.151
 con = -0.00938042
 ; Loop until we're within BOTH of our thresholds
-i = 15
+i = 17
 WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
@@ -234,7 +234,7 @@ print, newline, 'Saving the trials into one FITS cube'
 print, 'Converting to array...'
 cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 
-writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'while_'+$
+writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_while_'+$
 	string(i)+'_cube.fits',/rem), cube
 	
 print, 'FITS cube created! Starting analysis', newline
@@ -255,6 +255,7 @@ print,'Best trial was trial'+string(where(devs eq min(devs)))
 
 print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')',newline
 best_con = cons[WHERE(devs eq MIN(devs))]
+best_con = best_con[0]; make sure that we don't have multiple
 print, 'Contrast:', string(best_con), newline
 
 ; Reset stuff for the next loop iteration:
