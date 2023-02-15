@@ -111,7 +111,7 @@ x_avg = 277.713 & y_avg = 353.151
 con = -0.00938042
 ; Loop until we're within BOTH of our thresholds
 i = 20
-WHILE (hc > hc_thresh) || (hw > hw_thresh) DO BEGIN
+WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
 xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
