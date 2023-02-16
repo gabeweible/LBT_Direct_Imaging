@@ -16,7 +16,8 @@
 ; as close to the actual companion to get the photometric uncertainty (divide by the mean to get a
 ; percent error)
 
-pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gauss
+pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gauss,$
+	write=write
    ; Type is 'ADI' or 'KLIP'
    ; planet_spots is meant to be a multiple of 16 (the number that fit naturally)
 
@@ -27,7 +28,10 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    ;------------------------------[ Start User Input ]---------------------------------
 
    ; Where to find our files and put the results
-   output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_'+strcompress(coadd,/r)+'/'
+   
+   output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_'+$
+   	strcompress(coadd,/r)+'/'
+   	
    obj = 'HII1348'
 
    ; Parameters needed to read in our total_klip or total_adi file
@@ -39,10 +43,11 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    if not keyword_set(planet_spots) then planet_spots = 16; Includes HII 1348 b!
    if not keyword_set(use_gauss) then use_gauss = 0
    pxscale = 0.0107 ; arcsec/pixel
-   contrast = 0.008914755; Average of last two runs with photometry.pro and made positive
+   contrast = 0.00937928; from photometry.pro and made positive
    fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
-   real_theta = 1.312585; rad, from photometry.pro results
-   planet_r = 1.14512; arcsec, from photometry.pro results
+   real_theta = 1.30851; rad, from photometry.pro results
+   planet_r = 1.14288; arcsec, from photometry.pro results
+   x = 277.695 & y = 353.158
    
    ; aperture photometry parameters
    aper_rad = fwhm/2.
@@ -55,6 +60,8 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
 
    ; Default to ADI for now
    if not keyword_set(type) then type = 'ADI'
+   
+   if not keyword_set(write) then write = 0
    
    if planet_spots mod 16 then begin
       print, "Error enter an integer multiple of 16 for planet_spots"
@@ -72,8 +79,11 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    ;
    ;endif
    if type eq 'ADI' then begin
-      og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+'filt_'+$
-         string(filter)+'_neg_inj_'+string(0)+'_total_adi.fits',/rem))
+   
+      og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+$
+      	string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(0)+$
+      	'_total_adi.fits',/rem))
+      	
    endif
    print, 'Original image read, finding companion centroid...', newline
    print, 'Starting loop over thetas'
@@ -99,8 +109,8 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    trial = 0
    foreach theta, thetas do begin
       ; Do our injections
-      hii1348_pipeline, rho=planet_r, theta=theta, contrast=contrast, pre_inj_stuff=0,$
-         neg_inj=0, uncert=1, trial=trial, coadd=coadd, use_gauss=use_gauss; Inject and run ADI
+      hii1348_pipeline, rho=planet_r, theta=theta, contrast=contrast, pre_inj=0,$
+         neg_inj=0, uncert=1, trial=trial, coadd=coadd, use_gauss=use_gauss, klip=0; Inject and run ADI
 
       ; Read in the total KLIP or ADI file after the negative injection
       print, 'Reading in neg-injected file'
@@ -130,7 +140,8 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
       cen_x = XCEN & cen_y = YCEN
       
       ; Do some photometry on our recovered source
-      aper,uncert_image,cen_x,cen_y,rec_flux,rec_fluxerr,sky,skyerr,1.75,aper_rad,sky_rad,[-99E99,99E99],/flux,SETSKYVAL=0,/exact,/nan
+      aper,uncert_image,cen_x,cen_y,rec_flux,rec_fluxerr,sky,skyerr,1.75,aper_rad,$
+      	sky_rad,[-99E99,99E99],/flux,SETSKYVAL=0,/exact,/nan
       
       ; Calculate rho, theta from cen_x, cen_y
       cen_rho = pxscale * SQRT(((cen_x-250.)^2.)+((cen_y-250.)^2.))
@@ -142,23 +153,38 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
       print, 'Injected rho, theta:', planet_r, theta, newline
       
       ; Save our results  to arrays
-      rec_xxs=[rec_xxs,cen_x] & rec_yys=[rec_yys,cen_y] & rec_fluxes=[rec_fluxes,rec_flux]
+      
+      rec_xxs=[rec_xxs,cen_x] & rec_yys=[rec_yys,cen_y] & rec_fluxes=[rec_fluxes,$
+      	rec_flux]
+      	
       rec_rhos=[rec_rhos,cen_rho] & rec_thetas=[rec_thetas,cen_theta]
       
-      print, 'Done.'+newline+'Writing FITS...'
-      writefits, strcompress(output_path+'stdev_photometry/'+obj+'_trial_'+string(sigfig(trial,4))+'.fits', /rem), uncert_image
+      if write eq 1 then begin
+      	print, 'Done.'+newline+'Writing FITS...'
+      	
+      	writefits, strcompress(output_path+'photometry/'+obj+'_trial_'+$
+      		string(sigfig(trial,4))+'.fits', /rem), uncert_image
+      endif
+      
       print, 'Done.'+newline+'Incrementing trial...'
       trial += 1
    endforeach; thetas foreach
 
    ; Save our results
    print, 'Saving...'
-   save,filename=output_path+'stdev_photometry/'+obj+'_negative_inj_data.sav',xxs,yys,thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_fluxes
+   
+   save,filename=output_path+'photometry/'+obj+'_negative_inj_data.sav',xxs,yys,$
+   	thetas,rec_xxs,rec_yys,rec_rhos,rec_thetas,rec_fluxes
+   	
    print, 'Done.'
    
    ; Combine all of the trials into a cube and write it to the same folder
-   print, newline, 'Saving the trials into one FITS cube'
-   folder_cube, output_path+'stdev_photometry/', output_path+'stdev_photometry/cube/', 'array'
+   
+   if write eq 1 then begin
+   	rint, newline, 'Saving the trials into one FITS cube'
+   	folder_cube, output_path+'photometry/', output_path+'photometry/', type='list'
+   endif
+   
    print, 'FITS cube created! Starting analysis', newline
    
    ; Create an array of HII 1348 b radii
@@ -169,7 +195,6 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    x_uncert=STDDEV(x_diff) & y_uncert=STDDEV(y_diff)
    
    ; Get SEP and PA uncertainties with error propagation
-   x = 277.328 & y = 353.4725
    rho_uncert = 0.5*sqrt( (x_uncert^2. / (2.*(x-250.))) + (y_uncert^2. / (2.*(y-250.))) )
    theta_uncert = sqrt( ((y-250.)^2. * x_uncert^2.) + ((x-250.)^2. * y_uncert^2.) ) / (y^2. - 500.*y + x^2. + 125000. - 500.*x)
    
