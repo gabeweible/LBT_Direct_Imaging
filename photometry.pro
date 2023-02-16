@@ -273,9 +273,10 @@ print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')'
 best_con = cons[WHERE(devs eq MIN(devs))]
 best_con = best_con[0]; make sure that we don't have multiple
 print, 'Contrast:', string(best_con), newline
+
 save, filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
 	'_results_while_'+string(i)+'.sav', /r), x_best, y_best, left, up, RA, DEC,$
-	rho_px, theta, rho_arcsec, PA
+	rho_px, theta, rho_arcsec, PA, best_con
 
 ; Reset stuff for the next loop iteration:
 x_avg = x_best & y_avg = y_best
