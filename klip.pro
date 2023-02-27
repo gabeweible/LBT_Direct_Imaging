@@ -1,8 +1,10 @@
 pro klip, obj, cube_folder, use_injection, do_destripe, filter, bin, bin_type,$
- do_hyper, do_annmode, combine_type, klip_fraction, start_frame, end_frame, fill,$
-  k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout, suffix, ct,$
-   do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast, trial=trial,$
-    fs=fs, neg_inj=neg_inj
+	do_hyper, do_annmode, combine_type, klip_fraction, start_frame, end_frame, fill,$
+	k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout_sx, annmode_inout_dx,$
+	suffix, ct, do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast,$
+   trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
+   truenorth_dx=truenorth_dx
+   
 newline = string(10B)
 
 for runs=1,4 do begin
@@ -12,10 +14,12 @@ for runs=1,4 do begin
    ;Do this for runs eq 1 and runs eq 2
    if runs lt 3 then begin
       output_folder = cube_folder + 'processed_left/'
-      truenorth = -1.39
+      truenorth = truenorth_sx
+      annmode_inout = annmode_inout_sx
    endif else begin
-      truenorth = 0.59
-      output_folder = cube_folder + 'processed_right/'
+   	output_folder = cube_folder + 'processed_right/'
+      truenorth = truenorth_dx
+      annmode_inout = annmode_inout_dx
    endelse
 
 obj=strcompress(obj,/rem)
@@ -167,9 +171,6 @@ if do_annmode then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, angl
 
 endfor
 
-   truenorth=-1.39
-   if runs eq 3 or runs eq 4 then truenorth=0.59
-
 for ii=0, (size(obj_cube))(3)-1 do begin
    print, 'Rotating by ', angles[ii]
    klip_cube[*,*,ii]=rot(klip_cube[*,*,ii],-angles[ii]-truenorth,/interp)
@@ -207,9 +208,11 @@ klipframe=medframe
    
    if runs eq 1 then nods = klipframe else nods = [[[nods]], [[klipframe]]]
    writefits, strcompress(cube_folder+ 'combined/' + obj + '_nods_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits', /rem), nods
-   
-   if runs eq 4 then begin
-      e = mean(nods, dim=3)
+ 
+endfor; Runs for
+
+; Do this stuff at the end to combine
+e = mean(nods, dim=3)
       writefits, strcompress(cube_folder + 'combined/' + obj + '_total_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
 
       e = mean(nods[*,*,0:1], dim=3)
@@ -233,11 +236,12 @@ klipframe=medframe
       ;Where does this correction factor come from?
       ; I'm having trouble with trying to *not* manually type in the folder here.
       if keyword_set(fs) then begin
-	print, 'FS = ', fs
+			print, 'FS = ', fs
       	if fs eq 1 then begin
-         find_sources,strcompress(super_suffix +   '_total_klip.fits',/rem),reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,filter=filter
-        endif; find_sources if
+         	find_sources,strcompress(super_suffix +   '_total_klip.fits',/rem),reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,filter=filter
+         endif; find_sources if
       endif; keyword_set(fs) if
+      
       size = 500.
       width = 10.7860;(4.7*1E-6) / (8.4) * 206265. / 0.0107
       print, 'PSF Width: ',width
@@ -245,8 +249,5 @@ klipframe=medframe
       PSFN = PSF / MAX(PSF)
       ec = convolve(e, PSFN)
       writefits, strcompress(super_suffix +  '_total_klip_conv.fits', /rem), ec
-   endif
- 
-endfor; Runs for   
    
 end; end procedure

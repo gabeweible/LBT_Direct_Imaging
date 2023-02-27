@@ -47,8 +47,12 @@ do_cen_median_sub = 0
 corr_thresh = 0.994 ; Split the difference
 
 ; Planet injection parameters
-;use_gauss can be set with a keyword
-pxscale=0.0107 ;arcsec/pixel
+; use_gauss can be set with a keyword
+pxscale_sx = 0.010648 ; +0.000039 or -0.000050 arcsec/pixel (from Steve and Jared)
+pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jared)
+truenorth_sx = -1.278 ; +0.131 or -0.225 deg (from Steve and Jared)
+truenorth_dx = 1.001 ; + 0.254 or -0.237 deg (from Steve and Jared)
+
 ; Passed values from keyword arguments (for contrast curve generation or astrometry/photometry)
 if (keyword_set(rho) and keyword_set(theta)) or (keyword_set(planet_x) and keyword_set(planet_y)) then begin
    use_injection=1
@@ -69,10 +73,10 @@ endif
 ; ADI/KLIP parameters (after testing/refinement)
 if not keyword_set(use_gauss) then use_gauss=1
 silent=1; Don't print so much in adi.pro "Rotating by ..."
-norm = 1; Normalize ADI frames to reduce residuals around the star
+normal = 1; Normalize ADI frames to reduce residuals around the star
 
 ;fs = 1; Run find_sources within ADI.pro; Set in a kwarg now...
-if not keyword_set(fs) then fs=0
+if not keyword_set(fs) then fs=1; Assume it's fine?
 
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
 do_destripe = 1
@@ -80,6 +84,7 @@ filter = 17.
 bin = 3
 bin_type = 'mean'
 do_hyper = 0
+
 if keyword_set(rho) or keyword_set(planet_x) then do_annmode=1 else do_annmode=0
 combine_type = 'nwadi'
 klip_fraction = 0
@@ -91,11 +96,14 @@ angsep= 1.
 anglemax = 360.
 nrings = 4.
 n_ang = 2
+
 ; Annulus inner and outer radii already setup for HII 1348 b; In px?
-annmode_inout = [83, 143]
+annmode_inout_sx = [83, 143]
+; Annulus inner and outer radii already setup for HII 1348 b; In px?
+annmode_inout_dx = [83, 143]
 
 ; Astrometry Parameters (Dewarp solns from 
-;https://scienceops.lbto.org/lbti/data-retrieval-reduction-publication/distortion-correction-and-astrometric-solution/)
+; https://scienceops.lbto.org/lbti/data-retrieval-reduction-publication/distortion-correction-and-astrometric-solution/)
 Kx_dx = [[-1.13034544e+01, 1.45852226e-02, -1.13372175e-05, 1.32602063e-09],$
  	  		[1.03220943e+00, -1.93058980e-05, 1.55798844e-08, -3.86115281e-12],$
  	  		[-2.57352199e-05, 2.70371257e-09, -6.62650011e-12, 3.25017078e-15],$
@@ -126,9 +134,14 @@ endif
 if use_injection and not neg_inj then begin; Custom annulus inner and outer radii for artificial injections at arbitrary locations
    annmode=1
    ;Thicc rings
-   annmode_inout=round([max([0.,planet_r/pxscale-25.+1.]),planet_r/pxscale+25.+2.])
-   if annmode_inout[1] gt 16 then BEGIN
-   	nnmode_inout=round([max([0.,planet_r/pxscale-30.+1.]),planet_r/pxscale+30.+2.])
+   annmode_inout_sx = round([max([0.,planet_r/pxscale_sx-25.+1.]),planet_r/pxscale_sx+25.+2.])
+   if annmode_inout_sx[1] gt 16 then BEGIN
+   	annmode_inout_sx = round([max([0.,planet_r/pxscale_sx-30.+1.]),planet_r/pxscale_sx+30.+2.])
+   endif
+   
+    annmode_inout_dx = round([max([0.,planet_r/pxscale_dx-25.+1.]),planet_r/pxscale_dx+25.+2.])
+   if annmode_inout_dx[1] gt 16 then BEGIN
+   	annmode_inout_dx = round([max([0.,planet_r/pxscale_dx-30.+1.]),planet_r/pxscale_dx+30.+2.])
    endif
    ; Thinn rings
    ;annmode_inout=round([max([0.,planet_r/pxscale-10.+1.]),planet_r/pxscale+10.+2.])
@@ -170,11 +183,14 @@ if pre_inj eq 1 then begin
 
    ; two options, one for radius and angle and the other for x and y
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
-   	planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r,$
-   	planet_theta=planet_theta, use_gauss=use_gauss, silent=silent
+   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+   	
    if keyword_set(planet_x) then inject_planets, obj, output_path, n_planets,$
-   	planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_y=planet_y,$
-   	planet_x=planet_x, use_gauss=use_gauss, silent=silent
+   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss, silent=silent,$
+   	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
    
    ; Change output folder manually in adi.pro and klip.pro !!!!!!!!!!!!!!! 
    ; (right now as long as it's macbook_<coadd> it's fine, and ssh is set
@@ -184,16 +200,20 @@ if pre_inj eq 1 then begin
    ; note that I might need to adjust the correction factor to get acurate values)
    
    if klip eq 1 then begin
+   
    klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
-    do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
-    klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-    annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
-    theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj
-   endif
+   	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
+   	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
+   	annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
+   	rho=rho, theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj,$
+		truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+		
+   endif; klip eq 1 if
    
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
-   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,norm=norm, uncert=uncert,$
-   	silent=silent
+   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,normal=normal, uncert=uncert,$
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
    
 endif
 if pre_inj eq 0 then begin
@@ -202,25 +222,31 @@ if pre_inj eq 0 then begin
 
    ; two options, one for radius and angle and the other for x and y
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
-   planet_contrast, pxscale, corr_thresh, do_cen_filter, planet_r=planet_r,$
-    planet_theta=planet_theta, use_gauss=use_gauss, silent=silent
+   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+    
    if keyword_set(planet_x) then begin
-      inject_planets, obj, output_path, n_planets, planet_contrast, pxscale,$
-       corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x,$
-        use_gauss=use_gauss
+      inject_planets, obj, output_path, n_planets, planet_contrast, pxscale_sx,$
+      pxscale_dx, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x,$
+      use_gauss=use_gauss, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
    endif
 
 	if klip eq 1 then begin
+	
    klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
    	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-      annmode_inout, suffix, corr_thresh, do_cen_filter, coadd, rho=rho,$
-      theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj
-	endif
+      annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
+      rho=rho, theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj,$
+      truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+      
+	endif; klip eq 1 if
 	
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
-   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert,$
-   	silent=silent
+   	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
    
 endif
 

@@ -1,6 +1,7 @@
-pro inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale,$
-	ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
-	planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent
+pro inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
+	pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
+	planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,
+	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
 	
 ;'HII1348', '~/OneDrive/Research/HII1348/testing'
 compile_opt idl2
@@ -21,19 +22,21 @@ endif else begin
 endelse
 
 print, 'Planet Contrast:', planet_contrast
-print, 'Pixel Scale:', pxscale, newline
 
 for runs=1,4 do begin
 
 ;Do this for runs eq 1 and runs eq 2
 if runs lt 3 then begin
    output_folder = cube_folder + '/processed_left'
-   truenorth = -1.39
+   truenorth = truenorth_sx
+   pxscale = pxscale_sx
 ; do this for runs 3 and 4
 endif else begin
    output_folder = cube_folder + '/processed_right'
-   truenorth = 0.59
+   truenorth = truenorth_dx
+   pxscale = pxscale_dx
 endelse
+print, 'Pixel Scale:', pxscale, newline
 
 ; Do this for runs eq 1 and runs eq 3
 if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'

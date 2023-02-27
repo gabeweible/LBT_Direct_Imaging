@@ -1,6 +1,7 @@
 pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct,$
-	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, norm=norm, uncert=uncert,$
-	silent=silent
+	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
+	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
+	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
 ; silent will supress all the "Rotating by ..." prints.
 compile_opt idl2
 newline = string(10B)
@@ -12,9 +13,9 @@ if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
 ;Do this for runs eq 1 and runs eq 2
 if runs lt 3 then begin
    output_folder = cube_folder + 'processed_left'
-   truenorth = -1.39
+   truenorth = truenorth_sx
 endif else begin
-   truenorth = 0.59
+   truenorth = truenorth_dx
    output_folder = cube_folder + 'processed_right'
 endelse
 
@@ -40,8 +41,8 @@ endif; destripe if
 ; Subtract a smoothed version of the image
 if filter gt 1 then for iii=0, n_frames - 1 do obj_cube[*,*,iii] -= smooth(obj_cube[*,*,iii], filter)
 ; Normalize all of the frames so that they each have a max value of 1 (should help with residuals around the star)
-if keyword_set(norm) then begin
-   if norm eq 1 then for iv=0, n_frames - 1 do obj_cube[*,*,iv] /= max(obj_cube[*,*,iv])
+if keyword_set(normal) then begin
+   if normal eq 1 then for iv=0, n_frames - 1 do obj_cube[*,*,iv] /= max(obj_cube[*,*,iv])
 endif
 
 restore, filename = output_folder + dither_folder + obj_name + string(ct) +   '_parang_clean.sav'
@@ -53,11 +54,17 @@ adi_cube = obj_cube
 
 for ii=0, n_frames - 1 do begin
    if not keyword_set(silent) or silent eq 0 then print, 'Rotating by ', angles[ii], newline
+   ; Rotate obj_cube frame to truenorth
+   ; (negatives because these are E of N, a.k.a. CCW, ROT does CW)
    obj_cube[*,*,ii] = rot(obj_cube[*,*,ii], -angles[ii] - truenorth, /interp)
+   ; Subtract the median frame (star PSF) from the new adi_cube frame
    adi_cube[*,*,ii] -= medframe
+   ; Rotate the (PSF-subtracted) adi_cube frame to truenorth
+   ; (negatives because these are E of N, a.k.a. CCW, ROT does CW)
    adi_cube[*,*,ii] = rot(adi_cube[*,*,ii], -angles[ii] - truenorth, /interp)
 endfor; rotate if
 
+; Write the de-rotated obj_cube (No ADI)
 writefits, output_folder + dither_folder + obj_name + inj_string + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '_cube_skysub_cen_filt_derot.fits', obj_cube
 
 combine_type = 'nwadi'
@@ -92,30 +99,51 @@ if runs eq 1 then adinods = adiframe else adinods = [[[adinods]], [[adiframe]]]
 ; I'm having trouble with trying to *not* manually type in the folder here (and in the lines below)
 writefits, strcompress(cube_folder + 'combined/' + obj_name + '_nods_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), adinods
 
-if runs eq 4 then begin
-   e = mean(adinods, dim=3)
-   writefits, strcompress(cube_folder + 'combined/' + obj_name + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '_total_adi.fits', /rem), e
-   ;What is the correction factor for?
-   ;
-   ; This line is giving me problems so I'm going to try and comment it out...Something is going wrong so that tests is undefined
-   ref_file=output_folder+dither_folder+obj_name+'_pupil.fits' ;unsaturated data can just use the pupil image
-   
-   if fs eq 1 then begin
-   find_sources,strcompress(cube_folder + 'combined/' +obj_name + 'ct_' + string(ct) +   'filt_'  +$
-  	string(filter) + '_neg_inj_' + string(neg_inj) + '_total_adi.fits',/rem),$
-	reference=output_folder+dither_folder+obj_name+ string(ct) +  '_pupil.fits',platescale=0.0107,$
-        correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,$
-        filter=filter
-   endif; fs set if
-
-   e = mean(adinods[*,*,0:1], dim=3)
-   writefits, strcompress(cube_folder + 'combined/' + obj_name + '_left_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), e
-
-   e = mean(adinods[*,*,2:3], dim=3)
-   writefits, strcompress(cube_folder + 'combined/' + obj_name + '_right_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), e
-endif
-
 endfor; runs for
+
+; Do this stuff only at the end - after the four runs for final combining.
+left_adi = adinods[*,*,0:1]
+left_adi_mean = mean(adinods[*,*,0:1], dim=3)
+writefits, strcompress(cube_folder + 'combined/' + obj_name + '_left_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), left_adi_mean
+
+right_adi = adinods[*,*,2:3]
+right_adi_mean = mean(adinods[*,*,2:3], dim=3)
+writefits, strcompress(cube_folder + 'combined/' + obj_name + '_right_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), right_adi_mean
+
+
+; Total ADI (scale left/SX frames to match pxscale of right/DX frames:
+; Get the factor we need to magnify the side with the greater pxscale by
+; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
+; more pixels!
+mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+
+if pxscale_sx gt pxscale_dx then begin
+	for i=0,1 do begin
+		left_adi[*,*,i] = rot(left_adi[*,*,i], 0, mag_factor, CUBIC=-0.5)
+	endfor
+endif else begin
+	for j=0,1 do begin
+		right_adi[*,*,j] = rot(right_adi[*,*,j], 0, mag_factor, CUBIC=-0.5)
+	endfor
+endelse
+
+; Average the averages for both sides
+total_adi = (mean(left_adi, dim=3) + mean(right_adi, dim=3)) / 2
+writefits, strcompress(cube_folder + 'combined/' + obj_name + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '_total_adi.fits', /rem), total_adi
+
+; unsaturated data can just use the pupil image
+ref_file = output_folder + dither_folder + obj_name + '_pupil.fits'
+
+if fs eq 1 then begin
+
+	find_sources,strcompress(cube_folder + 'combined/' +obj_name + 'ct_' +$
+		string(ct) + 'filt_' + string(filter) + '_neg_inj_' + string(neg_inj) +$
+		'_total_adi.fits',/rem), reference=output_folder+dither_folder+obj_name+$
+		string(ct) +  '_pupil.fits',platescale=0.0107,$
+		correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
+		fwhm=8.7,ct=ct,filter=filter
+	  
+endif; fs set if
 
 print, 'Finished.'
 
