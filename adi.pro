@@ -103,11 +103,11 @@ endfor; runs for
 
 ; Do this stuff only at the end - after the four runs for final combining.
 left_adi = adinods[*,*,0:1]
-left_adi_mean = mean(adinods[*,*,0:1], dim=3)
+left_adi_mean = mean(left_adi, dim=3)
 writefits, strcompress(cube_folder + 'combined/' + obj_name + '_left_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), left_adi_mean
 
 right_adi = adinods[*,*,2:3]
-right_adi_mean = mean(adinods[*,*,2:3], dim=3)
+right_adi_mean = mean(right_adi, dim=3)
 writefits, strcompress(cube_folder + 'combined/' + obj_name + '_right_adi' + suffix + 'ct_' + string(ct) +   'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' + string(uncert) +  '.fits', /rem), right_adi_mean
 
 

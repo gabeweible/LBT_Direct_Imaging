@@ -205,8 +205,8 @@ if pre_inj eq 1 then begin
    	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
    	annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
-   	rho=rho, theta=theta, contrast=contrast, fs=fs, neg_inj=neg_inj,$
-		truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+   	fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
 		
    endif; klip eq 1 if
    
@@ -238,8 +238,8 @@ if pre_inj eq 0 then begin
    	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
       annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
-      rho=rho, theta=theta, contrast=contrast, trial=trial, fs=fs, neg_inj=neg_inj,$
-      truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+      trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
+      truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
       
 	endif; klip eq 1 if
 	

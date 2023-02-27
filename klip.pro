@@ -1,9 +1,9 @@
 pro klip, obj, cube_folder, use_injection, do_destripe, filter, bin, bin_type,$
 	do_hyper, do_annmode, combine_type, klip_fraction, start_frame, end_frame, fill,$
 	k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout_sx, annmode_inout_dx,$
-	suffix, ct, do_cen_filter, coadd, rho=rho, theta=theta, contrast=contrast,$
-   trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
-   truenorth_dx=truenorth_dx
+	suffix, ct, do_cen_filter, coadd, trial=trial, fs=fs, neg_inj=neg_inj,$
+	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx,$
+	pxscale_dx=pxscale_dx
    
 newline = string(10B)
 
@@ -156,11 +156,6 @@ for ii=0, (size(obj_cube))(3)-1 do begin
 
 Print, '-------[ KLIPing image ', ii, ' out of ', (size(obj_cube))(3)-1, ' ]----------'
 print, 'Run:', runs
-if keyword_set(rho) then begin
-   print, newline, 'Separation:', rho
-   print, 'Theta:', theta
-   print, 'Contrast:', contrast, newline
-endif
 
 if do_hyper ne 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758) 
 
@@ -212,42 +207,62 @@ klipframe=medframe
 endfor; Runs for
 
 ; Do this stuff at the end to combine
-e = mean(nods, dim=3)
-      writefits, strcompress(cube_folder + 'combined/' + obj + '_total_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+left_klip = nods[*,*,0:1]
+left_klip_mean = mean(left_klip, dim=3)
+writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), left_klip_mean
 
-      e = mean(nods[*,*,0:1], dim=3)
-      writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+right_klip = nods[*,*,2:3]
+right_klip_mean = mean(right_klip, dim=3)
+writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), right_klip_mean
 
-      e = mean(nods[*,*,2:3], dim=3)
-      writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), e
+; Total KLIP (scale left/SX frames to match pxscale of right/DX frames:
+; Get the factor we need to magnify the side with the greater pxscale by
+; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
+; more pixels!
+mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
 
-      ;used to combine injections from both nights for improved SNR. Manually set to inj for now.
-      e = mean(nods, dim=3)
+if pxscale_sx gt pxscale_dx then begin
+	for i=0,1 do begin
+		left_klip[*,*,i] = rot(left_klip[*,*,i], 0, mag_factor, CUBIC=-0.5)
+	endfor
+endif else begin
+	for j=0,1 do begin
+		right_klip[*,*,j] = rot(right_klip[*,*,j], 0, mag_factor, CUBIC=-0.5)
+	endfor
+endelse
 
-      super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
-      if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
+; Average the averages for both sides
+total_klip = (mean(left_klip, dim=3) + mean(right_klip, dim=3)) / 2
 
-      writefits, strcompress(super_suffix +   '_total_klip.fits', /rem), e
+super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
+if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
 
-      writefits, strcompress(super_suffix +   '_klip_nod1.fits', /rem), nods[*,*,0]
-      writefits, strcompress(super_suffix +   '_klip_nod2.fits', /rem), nods[*,*,1]
-      writefits, strcompress(super_suffix +   '_klip_nod3.fits', /rem), nods[*,*,2]
-      writefits, strcompress(super_suffix +   '_klip_nod4.fits', /rem), nods[*,*,3]
-      ;Where does this correction factor come from?
-      ; I'm having trouble with trying to *not* manually type in the folder here.
-      if keyword_set(fs) then begin
-			print, 'FS = ', fs
-      	if fs eq 1 then begin
-         	find_sources,strcompress(super_suffix +   '_total_klip.fits',/rem),reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),fwhm=8.7,ct=ct,filter=filter
-         endif; find_sources if
-      endif; keyword_set(fs) if
-      
-      size = 500.
-      width = 10.7860;(4.7*1E-6) / (8.4) * 206265. / 0.0107
-      print, 'PSF Width: ',width
-      PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
-      PSFN = PSF / MAX(PSF)
-      ec = convolve(e, PSFN)
-      writefits, strcompress(super_suffix +  '_total_klip_conv.fits', /rem), ec
+writefits, strcompress(super_suffix +   '_total_klip.fits', /rem), total_klip
+
+writefits, strcompress(super_suffix +   '_klip_nod1.fits', /rem), nods[*,*,0]
+writefits, strcompress(super_suffix +   '_klip_nod2.fits', /rem), nods[*,*,1]
+writefits, strcompress(super_suffix +   '_klip_nod3.fits', /rem), nods[*,*,2]
+writefits, strcompress(super_suffix +   '_klip_nod4.fits', /rem), nods[*,*,3]
+;Where does this correction factor come from?
+; I'm having trouble with trying to *not* manually type in the folder here.
+if keyword_set(fs) then begin
+	print, 'FS = ', fs
+	if fs eq 1 then begin
+	
+		find_sources,strcompress(super_suffix + '_total_klip.fits',/rem),$
+			reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',$
+			platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
+			fwhm=8.7,ct=ct,filter=filter
+			
+	endif; find_sources if
+endif; keyword_set(fs) if
+
+size = 500.
+width = 10.7860;(4.7*1E-6) / (8.4) * 206265. / 0.0107
+print, 'PSF Width: ',width
+PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
+PSFN = PSF / MAX(PSF)
+total_klip_convolve = convolve(total_klip, PSFN)
+writefits, strcompress(super_suffix +  '_total_klip_conv.fits', /rem), total_klip_convolve
    
 end; end procedure
