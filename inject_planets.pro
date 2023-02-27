@@ -1,6 +1,6 @@
 pro inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
 	pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
-	planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,
+	planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,$
 	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
 	
 ;'HII1348', '~/OneDrive/Research/HII1348/testing'
