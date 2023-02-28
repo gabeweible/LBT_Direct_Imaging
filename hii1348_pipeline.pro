@@ -20,6 +20,7 @@ raw_path = '/Users/gabeweible/OneDrive/reasearch/kevin/raw'
 ;'/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 cube_start_frame = 0
 coadd = 25
+magnify = 0; DON'T magnify for two separate plate scales
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' + strcompress(coadd, /r) + '/'
 ;'/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
 ;	+ strcompress(coadd, /r) + '/'
@@ -206,14 +207,14 @@ if pre_inj eq 1 then begin
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
    	annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
    	fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
 		
    endif; klip eq 1 if
    
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,normal=normal, uncert=uncert,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
    
 endif
 if pre_inj eq 0 then begin
@@ -239,14 +240,15 @@ if pre_inj eq 0 then begin
    	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
       annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
       trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
-      truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
+      truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx,$
+      magnify=magnify
       
 	endif; klip eq 1 if
 	
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
    
 endif
 
