@@ -3,9 +3,11 @@ pro klip, obj, cube_folder, use_injection, do_destripe, filter, bin, bin_type,$
 	k_klip, angsep, anglemax, nrings, wr, n_ang, annmode_inout_sx, annmode_inout_dx,$
 	suffix, ct, do_cen_filter, coadd, trial=trial, fs=fs, neg_inj=neg_inj,$
 	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx,$
-	pxscale_dx=pxscale_dx
+	pxscale_dx=pxscale_dx, magnify=magnify
    
 newline = string(10B)
+
+if not keyword_set(magnify) then magnify = 0; Default to no magnification
 
 for runs=1,4 do begin
 
@@ -219,17 +221,22 @@ writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix 
 ; Get the factor we need to magnify the side with the greater pxscale by
 ; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
 ; more pixels!
-mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
 
-if pxscale_sx gt pxscale_dx then begin
-	for i=0,1 do begin
-		left_klip[*,*,i] = rot(left_klip[*,*,i], 0, mag_factor, CUBIC=-0.5)
-	endfor
-endif else begin
-	for j=0,1 do begin
-		right_klip[*,*,j] = rot(right_klip[*,*,j], 0, mag_factor, CUBIC=-0.5)
-	endfor
-endelse
+if magnify eq 1 then begin
+
+	mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+
+	if pxscale_sx gt pxscale_dx then begin
+		for i=0,1 do begin
+			left_klip[*,*,i] = rot(left_klip[*,*,i], 0, mag_factor, CUBIC=-0.5)
+		endfor
+	endif else begin
+		for j=0,1 do begin
+			right_klip[*,*,j] = rot(right_klip[*,*,j], 0, mag_factor, CUBIC=-0.5)
+		endfor
+	endelse
+	
+endif; magnify if
 
 ; Average the averages for both sides
 total_klip = (mean(left_klip, dim=3) + mean(right_klip, dim=3)) / 2

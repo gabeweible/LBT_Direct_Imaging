@@ -1,10 +1,12 @@
 pro adi, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct,$
 	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
 	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx
+	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
 ; silent will supress all the "Rotating by ..." prints.
 compile_opt idl2
 newline = string(10B)
+
+if not keyword_set(magnify) then magnify = 0; default to no magnification
 
 for runs=1,4 do begin
    
@@ -115,17 +117,21 @@ writefits, strcompress(cube_folder + 'combined/' + obj_name + '_right_adi' + suf
 ; Get the factor we need to magnify the side with the greater pxscale by
 ; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
 ; more pixels!
-mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+if magnify eq 1 then begin
 
-if pxscale_sx gt pxscale_dx then begin
-	for i=0,1 do begin
-		left_adi[*,*,i] = rot(left_adi[*,*,i], 0, mag_factor, CUBIC=-0.5)
-	endfor
-endif else begin
-	for j=0,1 do begin
-		right_adi[*,*,j] = rot(right_adi[*,*,j], 0, mag_factor, CUBIC=-0.5)
-	endfor
-endelse
+	mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+
+	if pxscale_sx gt pxscale_dx then begin
+		for i=0,1 do begin
+			left_adi[*,*,i] = rot(left_adi[*,*,i], 0, mag_factor, CUBIC=-0.5)
+		endfor
+	endif else begin
+		for j=0,1 do begin
+			right_adi[*,*,j] = rot(right_adi[*,*,j], 0, mag_factor, CUBIC=-0.5)
+		endfor
+	endelse
+	
+endif; magnify if
 
 ; Average the averages for both sides
 total_adi = (mean(left_adi, dim=3) + mean(right_adi, dim=3)) / 2
