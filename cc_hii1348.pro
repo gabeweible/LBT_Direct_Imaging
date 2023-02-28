@@ -76,7 +76,7 @@ for n = 0,n_elements(separations)-1 do begin
 		;name='S37'
 		;reduce_near,rho=rho,theta=theta,contrast=contrast,/block_burn,aa=aa,bb=bb,ab=ab,ba=ba
 		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj=0,$
-		uncert=0, neg_inj=0
+		uncert=0, neg_inj=0, klip=1
 		
 		;read image
 		image=readfits(strcompress(output_path + 'combined/' + 'HII1348' +$
