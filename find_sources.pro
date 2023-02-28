@@ -19,7 +19,7 @@
 
 pro find_sources,frame,reference=reference,sigma=sigma,correction_factor=correction_factor $
 ,FWHM=FWHM,clip_level=clip_level,platescale=platescale,inrad=inrad,outrad=outrad,stretch=stretch,$
-minvalue=minvalue,maxvalue=maxvalue,no_2d=no_2d,no_smooth=no_smooth,ct=ct,filter=filter,
+minvalue=minvalue,maxvalue=maxvalue,no_2d=no_2d,no_smooth=no_smooth,ct=ct,filter=filter,$
 do_cen_filter=do_cen_filter
 
 
