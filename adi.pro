@@ -137,9 +137,10 @@ ref_file = output_folder + dither_folder + obj_name + '_pupil.fits'
 if fs eq 1 then begin
 
 	find_sources,strcompress(cube_folder + 'combined/' +obj_name + 'ct_' +$
-		string(ct) + 'filt_' + string(filter) + '_neg_inj_' + string(neg_inj) +$
-		'_total_adi.fits',/rem), reference=output_folder+dither_folder+obj_name+$
-		string(ct) +  '_pupil.fits',platescale=0.0107,$
+		string(ct) + 'filt_' + string(filter) + '_neg_inj_' + string(neg_inj) + $
+		'_uncert_' + string(uncert) + '_total_adi.fits',/rem),$
+		reference=output_folder+dither_folder+obj_name+string(ct) +  '_pupil.fits',$
+		platescale=0.0107,$
 		correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
 		fwhm=8.7,ct=ct,filter=filter
 	  
