@@ -1,9 +1,9 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y,$
 	contrast=contrast, pre_inj=pre_inj, neg_inj=neg_inj, trial=trial,$
    outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert, klip=klip,$
-   fs=fs
+   fs=fs, two_soln_override=two_soln_override
 
-; hii1348_pipeline, pre_inj=1, neg_inj=0, uncert=0, ssh=0 for normal use
+; hii1348_pipeline, pre_inj=1, neg_inj=0, coadd=25, uncert=0, klip=1 for normal use
 
 ; Strict arrays (square brackets only) and 32-bit integers as default, instead of 16
 compile_opt IDL2
@@ -125,6 +125,16 @@ Ky_sx = [[-2.26409123e+00, 9.93175401e-01, -6.67169688e-06, 8.08275391e-09],$
          [8.17060299e-06, 1.35240460e-08, -5.52374318e-12, 2.14966954e-15],$
          [9.25982725e-10, -2.50607186e-12, 2.58675626e-15, -9.82463036e-19]]
 
+;------------------------------[ TWO SOLUTION OVERRIDE ]--------------------------
+ 
+if keyword_set(two_soln_override) && two_soln_override eq 1 then begin
+	pxscale_dx = pxscale_sx
+   truenorth_dx = truenorth_sx
+   Kx_dx = Kx_sx
+   Ky_dx = Ky_sx
+   print, 'Two astrometric solution override active, using SX soln for both sides'
+   wait, 2; wait for two seconds to see the message
+endif; two_soln_overrride if
 
 ;------------------------------[ End User Input ]---------------------------------
 
