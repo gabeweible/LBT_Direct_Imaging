@@ -129,7 +129,6 @@ Ky_sx = [[-2.26409123e+00, 9.93175401e-01, -6.67169688e-06, 8.08275391e-09],$
  
 if keyword_set(two_soln_override) && two_soln_override eq 1 then begin
 	pxscale_dx = pxscale_sx
-   truenorth_dx = truenorth_sx
    Kx_dx = Kx_sx
    Ky_dx = Ky_sx
    print, 'Two astrometric solution override active, using SX soln for both sides'
