@@ -17,7 +17,7 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-pro photometry, coadd=coadd, type=type, grid_sz=grid_sz
+pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz
 ; Type is 'ADI' or 'KLIP'
 
 COMPILE_OPT IDL2; Strictarr and 32-bit ints
