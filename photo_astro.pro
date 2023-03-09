@@ -44,23 +44,24 @@ n_ang = 2 & do_cen_filter = 1 & filter = 17. & ct = 0.994
 if ~ keyword_set(grid_sz) then grid_sz = 5; Default
 
 ; Inject_planets parameters
-uncert = 0; not get uncertainties yet
+uncert = 0; not getting uncertainties yet
 use_gauss = 1; Fit a gaussian to the pupil median PSF (more symmetric)
 n_planets = 1; Only one negative injection at a time
-; arcsec/pixel, will need to be updated after Trapezium calculations
-pxscale = 0.0107 
+; arcsec/pixel, updated now after Trapezium astrometry solution
+pxscale_sx = 0.010648 ; +0.000039 or -0.000050 arcsec/pixel (from Steve and Jared)
+pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jared)
 ; starting guess for the (negative) contrast, should be pretty close.
-c_guess = -0.008914755
+c_guess = -0.00938042
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
-guess = [277.3, 353.5]
+guess = [277.713, 353.151]
 fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
 nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 
 
-initial_hc = 0.02 ; plus or minus 2%
+initial_hc = 0.07 ; plus or minus 7%
 initial_hw = 0.5 ; plus or minus half a pixel (centroiding should get within 1 px)
 
 hc_thresh = 0.001; uncert is about 1%, so lets get within 0.1%
@@ -106,9 +107,9 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = 0.02*(0.8)^19.0 & hw = 0.5*(0.8)^19.0
-x_avg = 277.713 & y_avg = 353.151
-con = -0.00938042
+hc = initial_hc & hw = initial_hw
+x_avg = guess[0] & y_avg = guess[0]
+con = c_guess
 ; Loop until we're within BOTH of our thresholds
 i = 20
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
@@ -143,7 +144,8 @@ foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
       ; Something isn't working with injecting planets directly, so for now I'm using r and theta
-      planet_r = pxscale * SQRT(((xx-250.)^2.)+((yy-250.)^2.))
+      planet_r_sx = pxscale_sx * SQRT(((xx-250.)^2.)+((yy-250.)^2.))
+      planet_r_dx = pxscale_sx * SQRT(((xx-250.)^2.)+((yy-250.)^2.))
       planet_theta = ATAN((250.-yy)/(250.-xx)); radians (ccw from top at 0 rad)
 
       foreach contrast, c_loop do begin; Loop over (negative) contrasts
@@ -252,8 +254,8 @@ left = 250. - x_best; x > 250 is "minus left", since it's right (px)
 up = y_best - 250.; How much above the center we are (px)
 
 ; Convert to RA and DEC with the plate scale
-RA = pxscale * left
-DEC = pxscale * up
+RA = min_pxscale * left
+DEC = min_pxscale * up
 
 print, "This is at RA:", RA, 'and DEC:', DEC
 	
@@ -262,10 +264,10 @@ rho_px = SQRT( ((x_best-250.)^2.) + ((y_best-250.)^2.) )
 theta = ATAN( (y_best-250.) / (x_best-250.) )
 
 ; Convert to arcsec and PA
-rho_arcsec = rho_px * pxscale
+rho_arcsec = rho_px * min_pxscale
 PA = 270. + !RADEG * theta; CW from +y-axis (deg)
 
-print, 'Or, at (rho, theta): ('+string(pxscale*rho_px)+', '+string(theta)+')',newline
+print, 'Or, at (rho, theta): ('+string(min_pxscale*rho_px)+', '+string(theta)+')',newline
 	
 print,'Best trial was trial'+string(where(devs eq min(devs)))
 
