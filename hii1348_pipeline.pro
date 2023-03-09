@@ -20,8 +20,16 @@ raw_path = '/Users/gabeweible/OneDrive/reasearch/kevin/raw'
 ;'/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 cube_start_frame = 0
 coadd = 25
-magnify = 0; DON'T magnify for two separate plate scales
+magnify = 1; Magnify
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' + strcompress(coadd, /r) + '/'
+
+; Planet injection parameters
+; use_gauss can be set with a keyword
+pxscale_sx = 0.010648 ; +0.000039 or -0.000050 arcsec/pixel (from Steve and Jared)
+pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jared)
+truenorth_sx = -1.278 ; +0.131 or -0.225 deg (from Steve and Jared)
+truenorth_dx = 1.001 ; + 0.254 or -0.237 deg (from Steve and Jared)
+
 ;'/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
 ;	+ strcompress(coadd, /r) + '/'
 if keyword_set(outpath) then output_path=outpath
@@ -47,13 +55,6 @@ do_cen_median_sub = 0
 ; 0.993 is for KLIP, 0.995 is for ADI
 corr_thresh = 0.994 ; Split the difference
 
-; Planet injection parameters
-; use_gauss can be set with a keyword
-pxscale_sx = 0.010648 ; +0.000039 or -0.000050 arcsec/pixel (from Steve and Jared)
-pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jared)
-truenorth_sx = -1.278 ; +0.131 or -0.225 deg (from Steve and Jared)
-truenorth_dx = 1.001 ; + 0.254 or -0.237 deg (from Steve and Jared)
-
 ; Passed values from keyword arguments (for contrast curve generation or astrometry/photometry)
 if (keyword_set(rho) and keyword_set(theta)) or (keyword_set(planet_x) and keyword_set(planet_y)) then begin
    use_injection=1
@@ -72,12 +73,12 @@ if keyword_set(contrast) then begin
 endif
 
 ; ADI/KLIP parameters (after testing/refinement)
-if not keyword_set(use_gauss) then use_gauss=1
-silent=1; Don't print so much in adi.pro "Rotating by ..."
+if not keyword_set(use_gauss) then use_gauss = 1
+silent = 1; Don't print so much in adi.pro "Rotating by ..."
 normal = 1; Normalize ADI frames to reduce residuals around the star
 
 ;fs = 1; Run find_sources within ADI.pro; Set in a kwarg now...
-if not keyword_set(fs) then fs=1; Assume it's fine?
+if not keyword_set(fs) then fs = 1; Assume it's fine?
 
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
 do_destripe = 1
