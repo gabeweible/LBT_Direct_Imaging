@@ -26,17 +26,22 @@ for runs=1,4 do begin
 
 obj=strcompress(obj,/rem)
 
-if use_injection then obj_cube = readfits(output_folder + dither_folder + obj + string(ct) +  '_cube_skysub_cen_clean_inj.fits') else obj_cube = readfits(output_folder + dither_folder + obj + string(ct) +  '_cube_skysub_cen_clean.fits')
+if use_injection then obj_cube = readfits(output_folder + dither_folder + obj + string(ct) +$
+   '_cube_skysub_cen_clean_inj.fits') else obj_cube = readfits(output_folder + dither_folder +$
+   obj + string(ct) +  '_cube_skysub_cen_clean.fits')
 
 if do_destripe then begin
    print, 'destriping 90 degrees...'
-   for ii=0, (size(obj_cube))(3)-1 do obj_cube[*,*,ii]=destripe(obj_cube[*,*,ii],90.,clip_level=0.0,/nodisp)
+   for ii=0, (size(obj_cube))(3)-1 do obj_cube[*,*,ii]=destripe(obj_cube[*,*,ii],90.,clip_level=0.0,$
+      /nodisp)
    print, 'destriping 0 degrees...'
-   for ii=0, (size(obj_cube))(3)-1 do obj_cube[*,*,ii]=destripe(obj_cube[*,*,ii],0.,clip_level=0.0,/nodisp)
+   for ii=0, (size(obj_cube))(3)-1 do obj_cube[*,*,ii]=destripe(obj_cube[*,*,ii],0.,clip_level=0.0,$
+      /nodisp)
 endif
 
 
-if filter gt 1 then for iii=0,(size(obj_cube))(3)-1 do obj_cube[*,*,iii]=obj_cube[*,*,iii]-smooth(obj_cube[*,*,iii],filter)
+if filter gt 1 then for iii=0,(size(obj_cube))(3)-1 do obj_cube[*,*,iii]=obj_cube[*,*,iii]-$
+   smooth(obj_cube[*,*,iii],filter)
 
 restore,filename=output_folder + dither_folder + obj + string(ct) +  '_parang_clean.sav'
 
@@ -44,7 +49,8 @@ if bin gt 1 and bin_type eq 'median' then begin
    st=1
    for ii=0.,(size(obj_cube))(3)-1. do begin
       print, fix(ii+1.) mod fix(bin)
-      if fix(ii+1.) mod fix(bin) eq 1 then binned=obj_cube[*,*,ii] else binned=[ [[binned]],[[ obj_cube[*,*,ii] ]] ]
+      if fix(ii+1.) mod fix(bin) eq 1 then binned=obj_cube[*,*,ii] else binned=[ [[binned]],$
+         [[ obj_cube[*,*,ii] ]] ]
       if fix(ii+1.) mod fix(bin) eq 0 then begin
       
          print,'Binning left frames...'
@@ -71,9 +77,11 @@ if bin gt 1 and bin_type eq 'median' then begin
    print, size(binned_cube)
    st=1
    for ii=0,(size(obj_cube))(3)-1. do begin
-      if fix(ii+1.) mod fix(bin) eq 1 then binned_angle=angles[ii] else binned_angle=binned_angle+angles[ii]
+      if fix(ii+1.) mod fix(bin) eq 1 then binned_angle=angles[ii] else binned_angle=binned_angle+$
+         angles[ii]
       if fix(ii+1.) mod fix(bin) eq 0 then begin
-         if st eq 1 then begin binned_angles = binned_angle/bin & st=0 & endif else binned_angles=[[[binned_angles]],[[binned_angle/bin]]]
+         if st eq 1 then begin binned_angles = binned_angle/bin & st=0 & endif else binned_angles=$
+            [[[binned_angles]],[[binned_angle/bin]]]
       endif
    endfor   
    
@@ -108,9 +116,11 @@ if bin gt 1 and bin_type eq 'mean' then begin
    print, size(binned_cube)
    st=1
    for ii=0,(size(obj_cube))(3)-1. do begin
-      if fix(ii+1.) mod fix(bin) eq 1 then binned_angle=angles[ii] else binned_angle=binned_angle+angles[ii]
+      if fix(ii+1.) mod fix(bin) eq 1 then binned_angle=angles[ii] else binned_angle=binned_angle+$
+         angles[ii]
       if fix(ii+1.) mod fix(bin) eq 0 then begin
-         if st eq 1 then begin binned_angles = binned_angle/bin & st=0 & endif else binned_angles=[[[binned_angles]],[[binned_angle/bin]]]
+         if st eq 1 then begin binned_angles = binned_angle/bin & st=0 & endif else binned_angles=$
+            [[[binned_angles]],[[binned_angle/bin]]]
       endif
    endfor   
    
@@ -144,7 +154,8 @@ obj_cube=obj_cube[*,*,where(bads eq 0.)]
 
 
 if klip_fraction eq 1 then begin
-   obj_cube=obj_cube[*,*,(start_frame/100.)*((size(obj_cube))(3)):(end_frame/100.)*((size(obj_cube))(3)-1.)]
+   obj_cube=obj_cube[*,*,(start_frame/100.)*((size(obj_cube))(3)):(end_frame/100.)*$
+      ((size(obj_cube))(3)-1.)]
    angles=angles[(start_frame/100.)*((size(obj_cube))(3)):(end_frame/100.)*((size(obj_cube))(3)-1.)]
 endif
 
@@ -159,11 +170,19 @@ for ii=0, (size(obj_cube))(3)-1 do begin
 Print, '-------[ KLIPing image ', ii, ' out of ', (size(obj_cube))(3)-1, ' ]----------'
 print, 'Run:', runs
 
-if do_hyper ne 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758) 
+if do_hyper ne 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii,$
+    trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4,$
+    pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr,$
+    n_ang =n_ang, num=758) 
 
-if do_hyper eq 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758, /hyper) 
+if do_hyper eq 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii,$
+   trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4,$
+   pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang,$
+   num=758, /hyper) 
 
-if do_annmode then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, anglemask=anglemask, distmask=distmask, trial=trial, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep, anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758, annmode_inout=annmode_inout) 
+if do_annmode then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, anglemask=anglemask,$
+   distmask=distmask, trial=trial, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep,$
+   anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758, annmode_inout=annmode_inout) 
 
 
 endfor
@@ -181,46 +200,69 @@ for ii=0, (size(obj_cube))(3)-1 do begin
    klip_cube[*,*,ii]=framei
 endfor
 
-   writefits,output_folder+dither_folder+obj+ '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '_cube_klip.fits', klip_cube
+   writefits,output_folder+dither_folder+obj+ '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type +$
+      '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$
+      string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+$
+      string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +$
+      '_cube_klip.fits', klip_cube
    
    if combine_type eq 'median' then medarr, klip_cube, medframe
    
    if combine_type eq 'mean' then medframe=mean(klip_cube,dim=3)
    if combine_type eq 'nwadi' then medframe=nw_ang_comb(klip_cube,angles)
    
-   writefits,strcompress(output_folder+dither_folder+'/klip/'+obj+'_median_klip'+suffix+ '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits',/rem), medframe
+   writefits,strcompress(output_folder+dither_folder+'/klip/'+obj+'_median_klip'+suffix+ '_bin_' +$
+      string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+      string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+      string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+      string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits',/rem), medframe
    
-      sz=500.
-         width=(3.8*1E-6) / (8.4) * 206265. / 0.0107
-         print, 'PSF Width: ',width
-         PSF = psf_Gaussian(NPIX=sz, FWHM=[width,width])
-         PSFN = PSF/MAX(PSF)
+   sz=500.
+   width=(3.8*1E-6) / (8.4) * 206265. / 0.0107
+   print, 'PSF Width: ',width
+   PSF = psf_Gaussian(NPIX=sz, FWHM=[width,width])
+   PSFN = PSF/MAX(PSF)
 
-         medframe[where(finite(medframe) ne 1)]=0.
-         medframe_c = convolve(medframe, PSFN)
+   medframe[where(finite(medframe) ne 1)]=0.
+   medframe_c = convolve(medframe, PSFN)
          
-         writefits,strcompress(output_folder+dither_folder+'/klip/'+obj+'_median_klip_conv'+suffix+ '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits',/rem), medframe_c
+   writefits,strcompress(output_folder+dither_folder+'/klip/'+obj+'_median_klip_conv'+suffix+$
+      '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+$
+      '_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+      string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+      string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits',/rem), medframe_c
 
 klipframe=medframe
    
    if runs eq 1 then nods = klipframe else nods = [[[nods]], [[klipframe]]]
-   writefits, strcompress(cube_folder+ 'combined/' + obj + '_nods_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits', /rem), nods
+   writefits, strcompress(cube_folder+ 'combined/' + obj + '_nods_klip' + suffix + '_bin_' +$
+      string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+      string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+      string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+      string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits', /rem), nods
  
 endfor; Runs for
 
 ; Do this stuff at the end to combine
 left_klip = nods[*,*,0:1]
 left_klip_mean = mean(left_klip, dim=3)
-writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), left_klip_mean
+writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' +$
+   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), left_klip_mean
 
 right_klip = nods[*,*,2:3]
 right_klip_mean = mean(right_klip, dim=3)
-writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), right_klip_mean
+writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' +$
+   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), right_klip_mean
 
-; Total KLIP (scale left/SX frames to match pxscale of right/DX frames:
 ; Get the factor we need to magnify the side with the greater pxscale by
 ; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
-; more pixels!
+; more pixels! Both are then at the smaller plate scale.
 
 if magnify eq 1 then begin
 
@@ -241,7 +283,11 @@ endif; magnify if
 ; Average the averages for both sides
 total_klip = (mean(left_klip, dim=3) + mean(right_klip, dim=3)) / 2
 
-super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
+super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' +$
+   bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$
+   string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+$
+   string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj)
+   
 if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
 
 writefits, strcompress(super_suffix +   '_total_klip.fits', /rem), total_klip
