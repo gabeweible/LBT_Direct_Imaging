@@ -50,6 +50,8 @@ n_planets = 1; Only one negative injection at a time
 ; arcsec/pixel, updated now after Trapezium astrometry solution
 pxscale_sx = 0.010648 ; +0.000039 or -0.000050 arcsec/pixel (from Steve and Jared)
 pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jared)
+
+min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
 c_guess = -0.00938042
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
@@ -108,10 +110,10 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 ;--------------------------------------------------------------------------------
 
 hc = initial_hc & hw = initial_hw
-x_avg = guess[0] & y_avg = guess[0]
+x_avg = cen_x & y_avg = cen_y
 con = c_guess
 ; Loop until we're within BOTH of our thresholds
-i = 20
+i = 1
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
@@ -144,8 +146,7 @@ foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
       ; Something isn't working with injecting planets directly, so for now I'm using r and theta
-      planet_r_sx = pxscale_sx * SQRT(((xx-250.)^2.)+((yy-250.)^2.))
-      planet_r_dx = pxscale_sx * SQRT(((xx-250.)^2.)+((yy-250.)^2.))
+      planet_r = min_pxscale * SQRT(((xx-250.)^2.)+((yy-250.)^2.)); Same arcsec radius
       planet_theta = ATAN((250.-yy)/(250.-xx)); radians (ccw from top at 0 rad)
 
       foreach contrast, c_loop do begin; Loop over (negative) contrasts
@@ -155,7 +156,7 @@ foreach xx, x_loop do begin; Loop over x
 ;     	   hii1348_pipeline, planet_x=xx, planet_y=yy, contrast=contrast, pre_inj_stuff=0, neg_inj=1,$
 ;     	      trial=trial, coadd=coadd, use_gauss=use_gauss
 
-     	   hii1348_pipeline, rho=planet_r, theta=planet_theta, contrast=contrast,$
+     	   hii1348_pipeline, rho=planet_r,theta=planet_theta, contrast=contrast,$
      	   pre_inj=0, neg_inj=1, trial=trial, coadd=coadd, use_gauss=use_gauss,$
      	   uncert=uncert, klip=klip, fs=0; Inject and run ADI
       
