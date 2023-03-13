@@ -293,6 +293,9 @@ ENDWHILE; thresholds loop
 ; Save the FINAL results
 save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
 	 /r),xxs,yys,cons,devs,means
+	 
+photo_astro_to_csv, strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
+	 /r)
 
 ;-----------------------------------------------------------------------------------
 
