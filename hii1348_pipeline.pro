@@ -78,7 +78,7 @@ silent = 1; Don't print so much in adi.pro "Rotating by ..."
 normal = 1; Normalize ADI frames to reduce residuals around the star
 
 ;fs = 1; Run find_sources within ADI.pro; Set in a kwarg now...
-if not keyword_set(fs) then fs = 1; Assume it's fine?
+if not keyword_set(fs) then fs = 0; Assume it's NOT fine?
 
 if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
 do_destripe = 1
