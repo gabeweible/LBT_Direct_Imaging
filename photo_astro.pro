@@ -66,8 +66,8 @@ nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 initial_hc = 0.07 ; plus or minus 7%
 initial_hw = 0.5 ; plus or minus half a pixel (centroiding should get within 1 px)
 
-hc_thresh = 0.001; uncert is about 1%, so lets get within 0.1%
-hw_thresh = 0.005; (5/1000 of a px on either side, uncert is about 5/100 either way)
+hc_thresh = 0.0005; uncert is about 1%, so lets get within 0.05%
+hw_thresh = 0.0025; (2.5/1000 of a px on either side, uncert is about 5/100 either way)
 
 ;------------------------------[ End User Input ]---------------------------------
 
@@ -109,9 +109,9 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = initial_hc & hw = initial_hw
-x_avg = cen_x & y_avg = cen_y
-con = c_guess
+hc = initial_hc*((0.8)^(20)) & hw = initial_hw*((0.8)^(20))
+x_avg = 277.300 & y_avg = 353.546
+con = -0.00940156
 ; Loop until we're within BOTH of our thresholds
 i = 1
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
