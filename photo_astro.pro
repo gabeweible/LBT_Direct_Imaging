@@ -113,7 +113,7 @@ hc = initial_hc*((0.8)^(20)) & hw = initial_hw*((0.8)^(20))
 x_avg = 277.300 & y_avg = 353.546
 con = -0.00940156
 ; Loop until we're within BOTH of our thresholds
-i = 1
+i = 22
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
