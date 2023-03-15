@@ -45,9 +45,9 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    pxscale = 0.0107 ; arcsec/pixel
    contrast = 0.00937928; from photometry.pro and made positive
    fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
-   real_theta = 1.30851; rad, from photometry.pro results
-   planet_r = 1.14288; arcsec, from photometry.pro results
-   x = 277.695 & y = 353.158
+   real_theta = 1.31302; rad, from photometry.pro results
+   planet_r = 1.14024; arcsec, from photometry.pro results
+   x = 277.300 & y = 353.546
    
    ; aperture photometry parameters
    aper_rad = fwhm/2.
@@ -110,7 +110,8 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    foreach theta, thetas do begin
       ; Do our injections
       hii1348_pipeline, rho=planet_r, theta=theta, contrast=contrast, pre_inj=0,$
-         neg_inj=0, uncert=1, trial=trial, coadd=coadd, use_gauss=use_gauss, klip=0; Inject and run ADI
+         neg_inj=0, uncert=1, trial=trial, coadd=coadd, use_gauss=use_gauss, klip=0,$
+         fs=0; Inject and run ADI
 
       ; Read in the total KLIP or ADI file after the negative injection
       print, 'Reading in neg-injected file'
