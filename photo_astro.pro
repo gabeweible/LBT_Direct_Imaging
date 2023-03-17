@@ -53,11 +53,11 @@ pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jare
 
 min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
-c_guess = -0.00938042
+c_guess = -0.00940411
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
-guess = [277.713, 353.151]
+guess = [277.300, 353.549]
 fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
 nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
@@ -89,6 +89,10 @@ if type eq 'ADI' then begin
    og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
    'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
 endif
+x_size = (size(og_image))[1] & y_size = (size(og_image))[2]
+;half-sizes
+x_hsize = x_size / 2.
+y_hsize = y_size / 2.
 
 print, 'Original image read, finding companion centroid...', newline
 
@@ -109,9 +113,9 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 
 ;--------------------------------------------------------------------------------
 
-hc = initial_hc*((0.8)^(20)) & hw = initial_hw*((0.8)^(20))
-x_avg = 277.300 & y_avg = 353.546
-con = -0.00940156
+hc = initial_hc & hw = initial_hw
+x_avg = cen_x & y_avg = cen_y
+con = c_guess
 ; Loop until we're within BOTH of our thresholds
 i = 22
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
@@ -145,10 +149,14 @@ cube = list()
 foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
-      ; Something isn't working with injecting planets directly, so for now I'm using r and theta
-      planet_r = min_pxscale * SQRT(((xx-250.)^2.)+((yy-250.)^2.)); Same arcsec radius
-      planet_theta = ATAN((250.-yy)/(250.-xx)); radians (ccw from top at 0 rad)
+      ; Something isn't working with injecting planets directly, so for now I'm
+      ; using r and theta
 
+		; radius from center of the image in arcsec
+      planet_r = min_pxscale * SQRT( ((xx-x_hsize)^2.) + ((yy-y_hsize)^2.) )
+      ; radians
+      planet_theta = ATAN( (yy-y_hsize) / (xx-x_hsize) )
+ 
       foreach contrast, c_loop do begin; Loop over (negative) contrasts
          
      	    ;Inject a negative planet at (xx, yy) = (planet_r, planet_theta) with the given contrast,
@@ -251,8 +259,8 @@ y_best = y_best[0]
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')
 	
-left = 250. - x_best; x > 250 is "minus left", since it's right (px)
-up = y_best - 250.; How much above the center we are (px)
+left = x_hsize - x_best; x > 250 is "minus left", since it's right (px)
+up = y_best - y_hsize; How much above the center we are (px)
 
 ; Convert to RA and DEC with the plate scale
 RA = min_pxscale * left
@@ -261,8 +269,8 @@ DEC = min_pxscale * up
 print, "This is at RA:", RA, 'and DEC:', DEC
 	
 	
-rho_px = SQRT( ((x_best-250.)^2.) + ((y_best-250.)^2.) ) 
-theta = ATAN( (y_best-250.) / (x_best-250.) )
+rho_px = SQRT( ((x_best-x_hsize)^2.) + ((y_best-y_hsize.)^2.) ) 
+theta = ATAN( (y_best-y_hsize) / (x_best-x_hsize) )
 
 ; Convert to arcsec and PA
 rho_arcsec = rho_px * min_pxscale

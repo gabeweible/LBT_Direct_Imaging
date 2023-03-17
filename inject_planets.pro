@@ -41,17 +41,29 @@ print, 'Pixel Scale:', pxscale, newline
 ; Do this for runs eq 1 and runs eq 3
 if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
 
-obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +  '_cube_skysub_cen_clean.fits')
+obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +$
+	'_cube_skysub_cen_clean.fits')
+	
 ;unsaturated data can just use the pupil image
-ref = readfits(output_folder + dither_folder + obj_name + string(ct) +  '_pupil.fits')
+ref = readfits(output_folder + dither_folder + obj_name + string(ct) +$
+	'_pupil.fits')
+	
 if use_gauss then ref = gauss2dfit(ref, /tilt)
 
-restore, filename = output_folder + dither_folder + obj_name + string(ct) +  '_parang_clean.sav'
+x_size = (size(ref))[1] & y_size = (size(ref))[2]
+;half-sizes
+x_hsize = x_size / 2.
+y_hsize = y_size / 2.
+
+restore, filename = output_folder + dither_folder + obj_name + string(ct) +$
+	'_parang_clean.sav'
 
 ;derotate
 for ii=0, (size(obj_cube))[3]-1 do begin
-   if not keyword_set(silent) or silent eq 0 then print, 'Derotating by ', -angles[ii]-truenorth
-   obj_cube[*,*,ii]=rot(obj_cube[*,*,ii],-angles[ii]-truenorth,/interp)
+   if not keyword_set(silent) or silent eq 0 then print, 'Derotating by ',$
+    	-angles[ii]-truenorth
+    	
+   obj_cube[*,*,ii] = rot(obj_cube[*,*,ii], -angles[ii]-truenorth, /interp)
 endfor
 
 big_ref=obj_cube[*,*,0]
@@ -61,10 +73,11 @@ big_ref[*]=0
 for xx=0, (size(ref))[1] - 1 do begin
    for yy=0, (size(ref))[1] - 1 do begin
 
-      big_ref[250.-(size(ref))[1]/2.+xx,250.-(size(ref))[1]/2.+yy]=ref[xx,yy]
+      big_ref[x_hsize-(size(ref))[1]/2.+xx,y_hsize-(size(ref))[1]/2.+yy] = ref[xx,yy]
 
    endfor
 endfor
+
 
 ;inject planets
 for ii=0, n_planets-1 do begin
@@ -76,8 +89,8 @@ for ii=0, n_planets-1 do begin
      	 xshift= planet_r[ii] * (1./pxscale) * Cos(planet_theta[ii])
      	 yshift= planet_r[ii] * (1./pxscale) * Sin(planet_theta[ii])
       endif else begin; If x and y are given
-         xshift = planet_x-250.
-         yshift = planet_y-250.
+         xshift = planet_x-x_hsize
+         yshift = planet_y-y_hsize
       endelse
 
       big_ref_ii=fshift(big_ref_ii, xshift,yshift)
@@ -92,7 +105,8 @@ for ii=0, (size(obj_cube))[3]-1 do begin
    obj_cube[*,*,ii]=rot(obj_cube[*,*,ii],angles[ii]+truenorth,/interp)
 endfor
 
-writefits, output_folder + dither_folder + obj_name + string(ct) +  '_cube_skysub_cen_clean_inj.fits', obj_cube
+writefits, output_folder + dither_folder + obj_name + string(ct) +$
+	'_cube_skysub_cen_clean_inj.fits', obj_cube
 
 endfor; runs for
 end

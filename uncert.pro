@@ -42,12 +42,12 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    ; Inject_planets parameters
    if not keyword_set(planet_spots) then planet_spots = 16; Includes HII 1348 b!
    if not keyword_set(use_gauss) then use_gauss = 0
-   pxscale = 0.0107 ; arcsec/pixel
-   contrast = 0.00937928; from photometry.pro and made positive
+   min_pxscale = 0.010648 ; arcsec/pixel
+   contrast = 0.00940411; from photometry.pro and made positive
    fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
-   real_theta = 1.31302; rad, from photometry.pro results
-   planet_r = 1.14024; arcsec, from photometry.pro results
-   x = 277.300 & y = 353.546
+   real_theta = 1.31301; rad, from photometry.pro results
+   planet_r = 1.14026; arcsec, from photometry.pro results
+   x = 277.300 & y = 353.549
    
    ; aperture photometry parameters
    aper_rad = fwhm/2.
@@ -82,10 +82,17 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    
       og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+$
       	string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(0)+$
-      	'_total_adi.fits',/rem))
+      	'_uncert_' + string(0) + '_total_adi.fits',/rem))
       	
    endif
-   print, 'Original image read, finding companion centroid...', newline
+   x_size = (size(og_image))[1] & y_size = (size(og_image))[2]
+	;half-sizes
+	x_hsize = x_size / 2.
+	y_hsize = y_size / 2.
+	print, x_hsize
+	print, y_hsize
+
+   print, 'Original image read', newline
    print, 'Starting loop over thetas'
    
    ; Create an array of planet_spots which start at the position of HII 1348 b
@@ -103,8 +110,8 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    thetas[where(thetas gt 2*!DPI)] -= 2*!DPI ; Keep angles on [0, 2pi) rad
    
    ; Calculate injected x and y values
-   xxs = planet_r * (1./pxscale) * Cos(thetas) + 250.
-   yys = planet_r * (1./pxscale) * Sin(thetas) + 250.
+   xxs = planet_r * (1./min_pxscale) * Cos(thetas) + x_hsize
+   yys = planet_r * (1./min_pxscale) * Sin(thetas) + y_hsize
    
    trial = 0
    foreach theta, thetas do begin
@@ -145,10 +152,10 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
       	sky_rad,[-99E99,99E99],/flux,SETSKYVAL=0,/exact,/nan
       
       ; Calculate rho, theta from cen_x, cen_y
-      cen_rho = pxscale * SQRT(((cen_x-250.)^2.)+((cen_y-250.)^2.))
+      cen_rho = min_pxscale * SQRT( ((cen_x-x_hsize)^2.)  +((cen_y-y_hsize)^2.) )
       ; radians (ccw from top at 0 rad)
-      cen_theta = ATAN((cen_y-250.)/(cen_x-250.))
-      if (cen_x-250.) lt 0 then cen_theta += !DPI; Accounting for limited range of arctan
+      cen_theta = ATAN( (cen_y-y_hsize) / (cen_x-x_hsize) )
+      if (cen_x - x_hsize) lt 0 then cen_theta += !DPI; Accounting for limited range of arctan
       if cen_theta lt 0 then cen_theta += 2*!DPI; only use positive angles for consistency
       print, 'cen_rho, cen_theta:', cen_rho, cen_theta
       print, 'Injected rho, theta:', planet_r, theta, newline
@@ -196,11 +203,15 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    x_uncert=STDDEV(x_diff) & y_uncert=STDDEV(y_diff)
    
    ; Get SEP and PA uncertainties with error propagation
-   rho_uncert = 0.5*sqrt( (x_uncert^2. / (2.*(x-250.))) + (y_uncert^2. / (2.*(y-250.))) )
-   theta_uncert = sqrt( ((y-250.)^2. * x_uncert^2.) + ((x-250.)^2. * y_uncert^2.) ) / (y^2. - 500.*y + x^2. + 125000. - 500.*x)
+   rho_uncert = 0.5*sqrt( (x_uncert^2. / (2.*(x-x_hsize))) + (y_uncert^2. /$
+   	(2.*(y-y_hsize))) )
+   	
+   theta_uncert = sqrt( ((y-y_hsize)^2. * x_uncert^2.) + ((x-x_hsize)^2. *$
+   	y_uncert^2.) ) / (y^2. - 2.*y_hsize*y + x^2. + 2.*y_hsize*x_hsize - 2.*x_hsize*x)
    
    ; Some average differences to make sure that their isn't an obvious systematic error
-   avg_xdiff = mean(x_diff) & avg_ydiff = mean(y_diff) & avg_rho_diff = mean(rho_diff) & avg_theta_diff = mean(theta_diff)
+   avg_xdiff = mean(x_diff) & avg_ydiff = mean(y_diff)
+   avg_rho_diff = mean(rho_diff) & avg_theta_diff = mean(theta_diff)
    
    ; Get contrast uncertainty
    flux_err = stddev(rec_fluxes) & rel_flux_err = flux_err / mean(rec_fluxes)
@@ -209,11 +220,11 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    print, 'Relative flux error: ', rel_flux_err * 100, ' %', newline
    
    ; Print our results to the terminal:
-   print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * pxscale, ' (arcsec)'
-   print, 'mean x (RA) difference:', avg_xdiff, ' (px) = ', avg_xdiff * pxscale, '(arcsec)', newline
+   print, 'x (RA) uncertainty:', x_uncert, ' (px) = ', x_uncert * min_pxscale, ' (arcsec)'
+   print, 'mean x (RA) difference:', avg_xdiff, ' (px) = ', avg_xdiff * min_pxscale, '(arcsec)', newline
    
-   print, 'y uncertainty:', y_uncert, ' (px) = ', y_uncert * pxscale, ' (arcsec)'
-   print, 'mean y (DEC) difference:', avg_ydiff, ' (px) = ', avg_ydiff * pxscale, '(arcsec)', newline
+   print, 'y uncertainty:', y_uncert, ' (px) = ', y_uncert * min_pxscale, ' (arcsec)'
+   print, 'mean y (DEC) difference:', avg_ydiff, ' (px) = ', avg_ydiff * min_pxscale, '(arcsec)', newline
    
    print, 'rho uncertainty:', rho_uncert, ' (arcsec)'
    print, 'mean rho (SEP) difference:', avg_rho_diff, ' (arcsec)', newline
@@ -222,6 +233,7 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
    print, 'theta uncertainty:', !RADEG * theta_uncert, ' (deg)'
    print, 'mean theta (PA) difference:', !RADEG * avg_theta_diff, ' (deg)', newline
    
-   print, 'Completed photometric and astrometric uncertainties in ', (systime(/JULIAN) - start_time) * 1440., ' minutes.'
+   print, 'Completed photometric and astrometric uncertainties in ',$
+		(systime(/JULIAN) - start_time) * 1440., ' minutes.'
 
 end; That's all, folks!
