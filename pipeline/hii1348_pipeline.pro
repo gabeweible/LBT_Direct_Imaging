@@ -1,7 +1,7 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y,$
 	contrast=contrast, pre_inj=pre_inj, neg_inj=neg_inj, trial=trial,$
    outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert, klip=klip,$
-   fs=fs, two_soln_override=two_soln_override
+   fs=fs, two_soln_override=two_soln_override, extra=extra
 
 ; hii1348_pipeline, pre_inj=1, neg_inj=0, coadd=25, uncert=0, klip=1 for normal use
 
@@ -21,7 +21,10 @@ raw_path = '/Users/gabeweible/OneDrive/reasearch/kevin/raw'
 cube_start_frame = 0
 coadd = 25
 magnify = 1; Magnify
-output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' + strcompress(coadd, /r) + '/'
+output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_' +$
+	strcompress(coadd, /r)
+if keyword_set(extra) then output_path += '_'+strcompress(extra, /r)
+output_path += '/'
 
 ; Planet injection parameters
 ; use_gauss can be set with a keyword

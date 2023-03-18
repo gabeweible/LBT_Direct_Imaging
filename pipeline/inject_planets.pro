@@ -27,12 +27,12 @@ for runs=1,4 do begin
 
 ;Do this for runs eq 1 and runs eq 2
 if runs lt 3 then begin
-   output_folder = cube_folder + '/processed_left'
+   output_folder = cube_folder + 'processed_left'
    truenorth = truenorth_sx
    pxscale = pxscale_sx
 ; do this for runs 3 and 4
 endif else begin
-   output_folder = cube_folder + '/processed_right'
+   output_folder = cube_folder + 'processed_right'
    truenorth = truenorth_dx
    pxscale = pxscale_dx
 endelse

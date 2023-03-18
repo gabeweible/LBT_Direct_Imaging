@@ -7,7 +7,8 @@ pro klip, obj, cube_folder, use_injection, do_destripe, filter, bin, bin_type,$
    
 newline = string(10B)
 
-if not keyword_set(magnify) then magnify = 0; Default to no magnification
+if not keyword_set(magnify) then magnify = 1; Default to magnification
+min_pxscale = min([pxscale_sx, pxscale_dx])
 
 for runs=1,4 do begin
 
@@ -290,21 +291,23 @@ super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1))
    
 if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
 
-writefits, strcompress(super_suffix +   '_total_klip.fits', /rem), total_klip
+writefits, strcompress(super_suffix + '_total_klip.fits', /rem), total_klip
 
-writefits, strcompress(super_suffix +   '_klip_nod1.fits', /rem), nods[*,*,0]
-writefits, strcompress(super_suffix +   '_klip_nod2.fits', /rem), nods[*,*,1]
-writefits, strcompress(super_suffix +   '_klip_nod3.fits', /rem), nods[*,*,2]
-writefits, strcompress(super_suffix +   '_klip_nod4.fits', /rem), nods[*,*,3]
+writefits, strcompress(super_suffix + '_klip_nod1.fits', /rem), nods[*,*,0]
+writefits, strcompress(super_suffix + '_klip_nod2.fits', /rem), nods[*,*,1]
+writefits, strcompress(super_suffix + '_klip_nod3.fits', /rem), nods[*,*,2]
+writefits, strcompress(super_suffix + '_klip_nod4.fits', /rem), nods[*,*,3]
 ;Where does this correction factor come from?
 ; I'm having trouble with trying to *not* manually type in the folder here.
 if keyword_set(fs) then begin
 	print, 'FS = ', fs
 	if fs eq 1 then begin
-	
+		
+		ref_file = output_folder+dither_folder+obj+string(ct) + '_pupil.fits'
+		
 		find_sources,strcompress(super_suffix + '_total_klip.fits',/rem),$
-			reference=output_folder+dither_folder+obj+string(ct) + '_pupil.fits',$
-			platescale=0.0107,correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
+			reference=ref_file, platescale=min_pxscale,$
+			correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
 			fwhm=8.7,ct=ct,filter=filter
 			
 	endif; find_sources if

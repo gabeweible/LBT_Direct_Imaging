@@ -17,8 +17,9 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz
+pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz, nod=nod
 ; Type is 'ADI' or 'KLIP'
+; Nod is 'total', 1, 2, 3, or 4
 
 COMPILE_OPT IDL2; Strictarr and 32-bit ints
 newline = string(10B); Make printing newlines convenient
@@ -30,7 +31,7 @@ start_time = systime(/JULIAN)
 
 ; Where to find our files and put the results
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_'+$
-	strcompress(coadd,/r)+'/'
+	strcompress(coadd,/r)+'_'+strcompress(nod,/r)+'/'
 	
 obj = 'HII1348'; Observed object
 
@@ -66,29 +67,57 @@ nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 initial_hc = 0.07 ; plus or minus 7%
 initial_hw = 0.5 ; plus or minus half a pixel (centroiding should get within 1 px)
 
-hc_thresh = 0.0005; uncert is about 1%, so lets get within 0.05%
-hw_thresh = 0.0025; (2.5/1000 of a px on either side, uncert is about 5/100 either way)
+; Let's go tiny! I wanna be done with this.
+hc_thresh = 0.0001
+hw_thresh = 0.0001
 
 ;------------------------------[ End User Input ]---------------------------------
 
 ; Default to ADI for now
 if not keyword_set(type) then type = 'ADI'
+if not keyword_set(nod) then nod='total'; Don't do four independent measurements
+; unless specified
 
-print, 'Reading in total ' + type +  ' image...'
-;if type eq 'KLIP' then begin
-;  
-;   og_image=readfits(strcompress(output_path+'combined/'+obj+'_bin_'+string(sigfig(bin,1))+'_type_'$
-;      +bin_type+'_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$
-;      string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+$
-;      string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2))+'neg_inj_'+string(0)+$
-;      '_total_klip.fits', /rem))
-;    
-;endif
+if nod eq 'total' then begin
 
-if type eq 'ADI' then begin
-   og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
-   'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
-endif
+	print, 'Reading in total ' + type +  ' image...'
+	;if type eq 'KLIP' then begin
+	;  
+	;   og_image=readfits(strcompress(output_path+'combined/'+obj+'_bin_'+string(sigfig(bin,1))+'_type_'$
+	;      +bin_type+'_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$
+	;      string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+$
+	;      string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2))+'neg_inj_'+string(0)+$
+	;      '_total_klip.fits', /rem))
+	;    
+	;endif
+
+	if type eq 'ADI' then begin
+		og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
+		'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
+	endif
+	
+endif else begin
+	
+	print, 'Reading in nod ' + type +  string(nod) + ' image...'
+	;if type eq 'KLIP' then begin
+	;  
+	;   og_image=readfits(strcompress(output_path+'combined/'+obj+'_bin_'+string(sigfig(bin,1))+'_type_'$
+	;      +bin_type+'_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$
+	;      string(sigfig(angsep,4))+'_angmax_'+string(sigfig(anglemax,3))+'_nrings_'+$
+	;      string(sigfig(nrings, 2))+'_nang_'+string(sigfig(n_ang,2))+'neg_inj_'+string(0)+$
+	;      '_total_klip.fits', /rem))
+	;    
+	;endif
+
+	if type eq 'ADI' then begin
+		og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
+		'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_adi_nod' +$
+		string(nod)+'.fits',/rem))
+	endif
+
+endelse
+
+	
 x_size = (size(og_image))[1] & y_size = (size(og_image))[2]
 ;half-sizes
 x_hsize = x_size / 2.
@@ -117,15 +146,16 @@ hc = initial_hc & hw = initial_hw
 x_avg = cen_x & y_avg = cen_y
 con = c_guess
 ; Loop until we're within BOTH of our thresholds
-i = 22
+i = 1
+; make a folder to put our stuff in
+file_mkdir, strcompress(output_path + 'photometry/nod_' + string(nod), /r)
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
 xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
 
 file_mkdir,$
-strcompress('/Users/gabeweible/OneDrive/research/HII1348/macbook_25/photometry/'+$
-	string(i), /r)
+strcompress(output_path + 'photometry/nod_' + string(nod) + '/' + string(i), /r)
 
 ; Define lower bounds, upper bounds, and step sizes for our nested loops (grid search)
 x_i = x_avg-hw & x_f = x_avg+hw
@@ -153,7 +183,7 @@ foreach xx, x_loop do begin; Loop over x
       ; using r and theta
 
 		; radius from center of the image in arcsec
-      planet_r = min_pxscale * SQRT( ((xx-x_hsize)^2.) + ((yy-y_hsize)^2.) )
+      planet_r = min_pxscale * SQRT( (xx-x_hsize)^2. + (yy-y_hsize)^2. )
       ; radians
       planet_theta = ATAN( (yy-y_hsize) / (xx-x_hsize) )
  
@@ -166,7 +196,7 @@ foreach xx, x_loop do begin; Loop over x
 
      	   hii1348_pipeline, rho=planet_r,theta=planet_theta, contrast=contrast,$
      	   pre_inj=0, neg_inj=1, trial=trial, coadd=coadd, use_gauss=use_gauss,$
-     	   uncert=uncert, klip=klip, fs=0; Inject and run ADI
+     	   uncert=uncert, klip=klip, fs=0, extra=nod; Inject and run ADI
       
      	   ; Read in the total KLIP or ADI file after the negative injection
      	   print, 'Reading in neg-injected file'
@@ -180,9 +210,20 @@ foreach xx, x_loop do begin; Loop over x
 ;     	         
 ;     	   endif
 ;     	   if type eq 'ADI' then begin (only real option for now)
-     	      image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+$
-     	      	string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
-     	      	'_uncert_0_total_adi.fits',/rem))
+				if nod eq 'total' then begin
+				
+					image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+$
+						string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
+						'_uncert_0_total_adi.fits',/rem))
+						
+				endif else begin
+				
+					image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+$
+						string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
+						'_uncert_0_adi_nod'+string(nod)+'.fits',/rem))
+						
+				endelse
+					
 ;     	   endif
          print, 'Read in image after negative injection'
       
@@ -205,9 +246,10 @@ foreach xx, x_loop do begin; Loop over x
      	   ; Save our results (in the loop)
      	   print, 'Saving...'
      	   
-     	   save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
-     	   	'_negative_inj_data_trial_' + string(trial)+'.sav', /r),xxs,yys,$
-     	   	cons,devs,means,rhos,thetas,hw,hc
+			save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+$
+				'/'+string(i)+'/'+obj+'_negative_inj_data_trial_' +$
+				string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
+					
      	   	
      	   ;print, 'Done.'+newline+'Writing FITS...'
      	   print, 'Done.'+newline+'Adding image to cube...'
@@ -231,9 +273,9 @@ foreach xx, x_loop do begin; Loop over x
 endforeach; xx foreach
 
 ; Save the results
-save,filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
-	'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,cons,devs,means,hw,$
-	hc,rhos,thetas
+save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+$
+	string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
+	cons,devs,means,hw,hc,rhos,thetas
 
 ; Combine all of the trials into a cube and write it to the same folder
 print, newline, 'Saving the trials into one FITS cube'
@@ -245,8 +287,8 @@ print, newline, 'Saving the trials into one FITS cube'
 print, 'Converting to array...'
 cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 
-writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+'_while_'+$
-	string(i)+'_cube.fits',/rem), cube
+writefits, strcompress(output_path+'photometry/nod_'+string(nod)+'/'+string(i)+$
+	'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
 	
 print, 'FITS cube created! Starting analysis', newline
 
@@ -257,7 +299,7 @@ x_best = x_best[0]
 y_best = y_best[0]
 
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
-	string(y_best)+')
+	string(y_best)+')'
 	
 left = x_hsize - x_best; x > 250 is "minus left", since it's right (px)
 up = y_best - y_hsize; How much above the center we are (px)
@@ -269,7 +311,7 @@ DEC = min_pxscale * up
 print, "This is at RA:", RA, 'and DEC:', DEC
 	
 	
-rho_px = SQRT( ((x_best-x_hsize)^2.) + ((y_best-y_hsize.)^2.) ) 
+rho_px = SQRT( (x_best-x_hsize)^2. + (y_best-y_hsize)^2.)
 theta = ATAN( (y_best-y_hsize) / (x_best-x_hsize) )
 
 ; Convert to arcsec and PA
@@ -285,9 +327,9 @@ best_con = cons[WHERE(devs eq MIN(devs))]
 best_con = best_con[0]; make sure that we don't have multiple
 print, 'Contrast:', string(best_con), newline
 
-save, filename=strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
-	'_results_while_'+string(i)+'.sav', /r), x_best, y_best, left, up, RA, DEC,$
-	rho_px, theta, rho_arcsec, PA, best_con
+save, filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+$
+	string(i)+'/'+obj+'_results_while_'+string(i)+'.sav', /r), x_best, y_best,$
+	left, up, RA, DEC,rho_px, theta, rho_arcsec, PA, best_con
 
 ; Reset stuff for the next loop iteration:
 x_avg = x_best & y_avg = y_best
@@ -299,11 +341,11 @@ ENDWHILE; thresholds loop
 
 ;-----------------------------------------------------------------------------------
 ; Save the FINAL results
-save,filename=strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
-	 /r),xxs,yys,cons,devs,means
+save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+obj+$
+	'_negative_inj_data_final.sav',/r),xxs,yys,cons,devs,means
 	 
-photo_astro_to_csv, strcompress(output_path+'photometry/'+obj+'_negative_inj_data_final.sav',$
-	 /r)
+photo_astro_to_csv, strcompress(output_path+'photometry/nod_'+string(nod)+'/'+obj+$
+	'_negative_inj_data_final.sav',/r)
 
 ;-----------------------------------------------------------------------------------
 
