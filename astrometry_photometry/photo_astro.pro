@@ -17,7 +17,7 @@
 ; about the absolute differences in position. Final results in PA and sep. More uncertainty in PA than in
 ; sep because of the orientation of LBTI
 
-pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz, nod=nod
+pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz, nod=nod, write=write
 ; Type is 'ADI' or 'KLIP'
 ; Nod is 'total', '1', '2', '3', or '4'
 
@@ -260,17 +260,7 @@ foreach xx, x_loop do begin; Loop over x
      	   means=[means,average]
      	   rhos=[rhos,planet_r] & thetas=[thetas,planet_theta]
      	   print, 'Done.'
-      
-     	   ; Save our results (in the loop)
-     	   print, 'Saving...'
-     	   
-			save,filename=strcompress(output_path+'photometry/nod_'+nod+$
-				'/'+string(i)+'/'+obj+'_negative_inj_data_trial_' +$
-				string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
-					
-     	   	
-     	   ;print, 'Done.'+newline+'Writing FITS...'
-     	   print, 'Done.'+newline+'Adding image to cube...'
+     	   print, 'Adding image to cube...'
      	   
      	   ;writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
      	   	;'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
@@ -290,25 +280,30 @@ foreach xx, x_loop do begin; Loop over x
    endforeach; yy foreach
 endforeach; xx foreach
 
-; Save the results
-save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
-	string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
-	cons,devs,means,hw,hc,rhos,thetas
+if write eq 1 then begin
 
-; Combine all of the trials into a cube and write it to the same folder
-print, newline, 'Saving the trials into one FITS cube'
-;folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
-	;save_path=strcompress(output_path+'photometry/while_'+$
-	;string(i)+'_', /r)
+	print, 'Converting to array...'
+	cube = cube.toArray(/TRANSPOSE, /NO_COPY)
+
+	; Save the results
+	save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
+		string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
+		cons,devs,means,hw,hc,rhos,thetas
+
+	; Combine all of the trials into a cube and write it to the same folder
+	print, newline, 'Saving the trials into one FITS cube'
+	;folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
+		;save_path=strcompress(output_path+'photometry/while_'+$
+		;string(i)+'_', /r)
 	
-
-print, 'Converting to array...'
-cube = cube.toArray(/TRANSPOSE, /NO_COPY)
-
-writefits, strcompress(output_path+'photometry/nod_'+nod+'/'+string(i)+$
-	'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
+	writefits, strcompress(output_path+'photometry/nod_'+nod+'/'+string(i)+$
+		'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
+		
+	print, 'FITS cube created!''
+		
+endif
 	
-print, 'FITS cube created! Starting analysis', newline
+print, 'Starting analysis', newline
 
 min_devs = WHERE(devs eq MIN(devs))
 median_i = median(min_devs)
@@ -345,9 +340,13 @@ print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')'
 best_con = cons[median_i]
 print, 'Contrast:', string(best_con), newline
 
-save, filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
-	string(i)+'/'+obj+'_results_while_'+string(i)+'.sav', /r), x_best, y_best,$
-	left, up, RA, DEC,rho_px, theta, rho_arcsec, PA, best_con
+if write eq 1 then begin
+
+	save, filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
+		string(i)+'/'+obj+'_results_while_'+string(i)+'.sav', /r), x_best, y_best,$
+		left, up, RA, DEC,rho_px, theta, rho_arcsec, PA, best_con
+
+endif; write eq 1 if
 
 ; Reset stuff for the next loop iteration:
 x_avg = x_best & y_avg = y_best
