@@ -54,7 +54,7 @@ pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jare
 
 min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
-c_guess_total = -0.00940411
+c_guess_total = -0.00940290
 c_guess_1 = -0.00958910
 c_guess_2 = -0.00914963
 c_guess_3 = -0.00969777
@@ -64,7 +64,7 @@ c_guess_nods = [c_guess_1, c_guess_2, c_guess_3, c_guess_4]
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
-guess_total = [277.300, 353.549]
+guess_total = [277.301, 353.548]
 guess_1 = [277.133, 353.696]
 guess_2 = [277.272, 353.125]
 guess_3 = [277.419, 353.635]
@@ -316,8 +316,6 @@ median_i = median(min_devs)
 ; Print some good results, restrict to one value (median)
 x_best = xxs[median_i]
 y_best = yys[median_i]
-x_best = median(x_best)
-y_best = median(y_best)
 
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')'
