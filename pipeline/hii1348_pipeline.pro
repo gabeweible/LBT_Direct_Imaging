@@ -1,7 +1,7 @@
 pro HII1348_pipeline, rho=rho, theta=theta, planet_x=planet_x, planet_y=planet_y,$
 	contrast=contrast, pre_inj=pre_inj, neg_inj=neg_inj, trial=trial,$
    outpath=outpath, coadd=coadd, use_gauss=use_gauss, uncert=uncert, klip=klip,$
-   fs=fs, two_soln_override=two_soln_override, extra=extra
+   fs=fs, two_soln_override=two_soln_override, extra=extra, nod=nod
 
 ; hii1348_pipeline, pre_inj=1, neg_inj=0, coadd=25, uncert=0, klip=1 for normal use
 
@@ -74,6 +74,7 @@ if keyword_set(contrast) then begin
 	if keyword_set(rho) then n_planets=n_elements(planet_r)
 	if keyword_set(planet_x) then n_planets=n_elements(planet_x)
 endif
+if not keyword_set(nod) then nod='total'
 
 ; ADI/KLIP parameters (after testing/refinement)
 if not keyword_set(use_gauss) then use_gauss = 1
@@ -199,12 +200,12 @@ if pre_inj eq 1 then begin
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
    	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
-   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    	
    if keyword_set(planet_x) then inject_planets, obj, output_path, n_planets,$
    	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss, silent=silent,$
-   	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+   	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    
    ; Change output folder manually in adi.pro and klip.pro !!!!!!!!!!!!!!! 
    ; (right now as long as it's macbook_<coadd> it's fine, and ssh is set
@@ -227,7 +228,7 @@ if pre_inj eq 1 then begin
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj,normal=normal, uncert=uncert,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify, nod
    
 endif
 if pre_inj eq 0 then begin
@@ -238,12 +239,12 @@ if pre_inj eq 0 then begin
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
    	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
-   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+   	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
     
    if keyword_set(planet_x) then begin
       inject_planets, obj, output_path, n_planets, planet_contrast, pxscale_sx,$
       pxscale_dx, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x,$
-      use_gauss=use_gauss, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx
+      use_gauss=use_gauss, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    endif
 
 	if klip eq 1 then begin
@@ -261,7 +262,7 @@ if pre_inj eq 0 then begin
    adi, obj, output_path, use_injection, do_destripe, filter, suffix, corr_thresh,$
    	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify
+   	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify, nod
    
 endif
 

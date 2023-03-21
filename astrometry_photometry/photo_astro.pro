@@ -19,7 +19,7 @@
 
 pro photo_astro, coadd=coadd, type=type, grid_sz=grid_sz, nod=nod
 ; Type is 'ADI' or 'KLIP'
-; Nod is 'total', 1, 2, 3, or 4
+; Nod is 'total', '1', '2', '3', or '4'
 
 COMPILE_OPT IDL2; Strictarr and 32-bit ints
 newline = string(10B); Make printing newlines convenient
@@ -54,22 +54,34 @@ pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jare
 
 min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
-c_guess = -0.00940411
+c_guess_total = -0.00940411
+c_guess_1 = -0.00958910
+c_guess_2 = -0.00914963
+c_guess_3 = -0.00969777
+c_guess_4 = -0.00924111
+c_guess_nods = [c_guess_1, c_guess_2, c_guess_3, c_guess_4]
+
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
-guess = [277.300, 353.549]
+guess_total = [277.300, 353.549]
+guess_1 = [277.133, 353.696]
+guess_2 = [277.272, 353.125]
+guess_3 = [277.419, 353.635]
+guess_4 = [277.377, 353.685]
+guess_nods = [[guess_1], [guess_2], [guess_3], [guess_4]]
+
 fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
 nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 
 
-initial_hc = 0.07 ; plus or minus 7%
-initial_hw = 0.5 ; plus or minus half a pixel (centroiding should get within 1 px)
+initial_hc = 0.0005 ; plus or minus 0.005 %
+initial_hw = 0.1 ; plus or minus 0.1 px (centroiding seems to get us this close)
 
-; Let's go tiny! I wanna be done with this.
-hc_thresh = 0.0001
-hw_thresh = 0.0001
+; Let's go tiny! I wanna be done with this. Should take us to 6 sigfigs for each
+hc_thresh = 0.0000005 ; percentage
+hw_thresh = 0.0005
 
 ;------------------------------[ End User Input ]---------------------------------
 
@@ -96,9 +108,12 @@ if nod eq 'total' then begin
 		'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_total_adi.fits',/rem))
 	endif
 	
-endif else begin
+	c_guess = c_guess_total
+	guess = guess_total
 	
-	print, 'Reading in nod ' + type +  string(nod) + ' image...'
+endif else begin; nod eq 'total' if
+	
+	print, 'Reading in nod ' + type +  nod + ' image...'
 	;if type eq 'KLIP' then begin
 	;  
 	;   og_image=readfits(strcompress(output_path+'combined/'+obj+'_bin_'+string(sigfig(bin,1))+'_type_'$
@@ -111,11 +126,14 @@ endif else begin
 
 	if type eq 'ADI' then begin
 		og_image=readfits(strcompress(output_path+'combined/'+obj +'ct_'+string(ct)+$
-		'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_adi_nod' +$
-		string(nod)+'.fits',/rem))
+		'filt_'+string(filter)+'_neg_inj_'+string(0)+'_uncert_0_adi_nod' + nod +$
+		'.fits',/rem))
 	endif
+	
+	c_guess = c_guess_nods[fix(nod)-1]
+	guess = guess_nods[*, fix(nod)-1]
 
-endelse
+endelse; nod ne 'total' else
 
 	
 x_size = (size(og_image))[1] & y_size = (size(og_image))[2]
@@ -148,14 +166,14 @@ con = c_guess
 ; Loop until we're within BOTH of our thresholds
 i = 1
 ; make a folder to put our stuff in
-file_mkdir, strcompress(output_path + 'photometry/nod_' + string(nod), /r)
+file_mkdir, strcompress(output_path + 'photometry/nod_' + nod, /r)
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
 xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
 
 file_mkdir,$
-strcompress(output_path + 'photometry/nod_' + string(nod) + '/' + string(i), /r)
+strcompress(output_path + 'photometry/nod_' + nod + '/' + string(i), /r)
 
 ; Define lower bounds, upper bounds, and step sizes for our nested loops (grid search)
 x_i = x_avg-hw & x_f = x_avg+hw
@@ -196,7 +214,7 @@ foreach xx, x_loop do begin; Loop over x
 
      	   hii1348_pipeline, rho=planet_r,theta=planet_theta, contrast=contrast,$
      	   pre_inj=0, neg_inj=1, trial=trial, coadd=coadd, use_gauss=use_gauss,$
-     	   uncert=uncert, klip=klip, fs=0, extra=nod; Inject and run ADI
+     	   uncert=uncert, klip=klip, fs=0, extra=nod, nod=nod; Inject and run ADI
       
      	   ; Read in the total KLIP or ADI file after the negative injection
      	   print, 'Reading in neg-injected file'
@@ -216,13 +234,13 @@ foreach xx, x_loop do begin; Loop over x
 						string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
 						'_uncert_0_total_adi.fits',/rem))
 						
-				endif else begin
+				endif else begin; nod eq 'total' if
 				
 					image=readfits(strcompress(output_path+'combined/'+obj+'ct_'+$
 						string(ct)+'filt_'+string(filter)+'_neg_inj_'+string(1)+$
-						'_uncert_0_adi_nod'+string(nod)+'.fits',/rem))
+						'_uncert_0_adi_nod'+nod+'.fits',/rem))
 						
-				endelse
+				endelse; nod neq 'total' else
 					
 ;     	   endif
          print, 'Read in image after negative injection'
@@ -246,7 +264,7 @@ foreach xx, x_loop do begin; Loop over x
      	   ; Save our results (in the loop)
      	   print, 'Saving...'
      	   
-			save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+$
+			save,filename=strcompress(output_path+'photometry/nod_'+nod+$
 				'/'+string(i)+'/'+obj+'_negative_inj_data_trial_' +$
 				string(trial)+'.sav', /r),xxs,yys,cons,devs,means,rhos,thetas,hw,hc
 					
@@ -273,7 +291,7 @@ foreach xx, x_loop do begin; Loop over x
 endforeach; xx foreach
 
 ; Save the results
-save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+$
+save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
 	string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
 	cons,devs,means,hw,hc,rhos,thetas
 
@@ -287,16 +305,19 @@ print, newline, 'Saving the trials into one FITS cube'
 print, 'Converting to array...'
 cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 
-writefits, strcompress(output_path+'photometry/nod_'+string(nod)+'/'+string(i)+$
+writefits, strcompress(output_path+'photometry/nod_'+nod+'/'+string(i)+$
 	'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
 	
 print, 'FITS cube created! Starting analysis', newline
 
-; Print some good results
-x_best = xxs[WHERE(devs eq MIN(devs))]
-y_best = yys[WHERE(devs eq MIN(devs))]
-x_best = x_best[0]
-y_best = y_best[0]
+min_devs = WHERE(devs eq MIN(devs))
+median_i = median(min_devs)
+
+; Print some good results, restrict to one value (median)
+x_best = xxs[median_i]
+y_best = yys[median_i]
+x_best = median(x_best)
+y_best = median(y_best)
 
 print, newline, 'Min. STDEV:', MIN(devs), 'at (x, y): ('+string(x_best)+', '+$
 	string(y_best)+')'
@@ -323,11 +344,10 @@ print, 'Or, at (rho, theta): ('+string(min_pxscale*rho_px)+', '+string(theta)+')
 print,'Best trial was trial'+string(where(devs eq min(devs)))
 
 print, 'Compare with centroiding (x, y): ('+string(cen_x)+', '+string(cen_y)+')',newline
-best_con = cons[WHERE(devs eq MIN(devs))]
-best_con = best_con[0]; make sure that we don't have multiple
+best_con = cons[median_i]
 print, 'Contrast:', string(best_con), newline
 
-save, filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+$
+save, filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
 	string(i)+'/'+obj+'_results_while_'+string(i)+'.sav', /r), x_best, y_best,$
 	left, up, RA, DEC,rho_px, theta, rho_arcsec, PA, best_con
 
@@ -341,10 +361,10 @@ ENDWHILE; thresholds loop
 
 ;-----------------------------------------------------------------------------------
 ; Save the FINAL results
-save,filename=strcompress(output_path+'photometry/nod_'+string(nod)+'/'+obj+$
+save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+obj+$
 	'_negative_inj_data_final.sav',/r),xxs,yys,cons,devs,means
 	 
-photo_astro_to_csv, strcompress(output_path+'photometry/nod_'+string(nod)+'/'+obj+$
+photo_astro_to_csv, strcompress(output_path+'photometry/nod_'+nod+'/'+obj+$
 	'_negative_inj_data_final.sav',/r)
 
 ;-----------------------------------------------------------------------------------
