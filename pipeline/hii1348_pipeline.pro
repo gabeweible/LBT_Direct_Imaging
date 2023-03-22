@@ -64,6 +64,7 @@ if (keyword_set(rho) and keyword_set(theta)) or (keyword_set(planet_x) and keywo
 endif else begin
    use_injection=0
 endelse
+if neg_inj eq 1 then n_planets=1
 if keyword_set(use_gauss) then use_gauss=[use_gauss]
 if keyword_set(rho) then planet_theta=[theta]
 if keyword_set(rho) then planet_r=[rho]
@@ -198,12 +199,12 @@ if pre_inj eq 1 then begin
 
    ; two options, one for radius and angle and the other for x and y
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
-   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    	
    if keyword_set(planet_x) then inject_planets, obj, output_path, n_planets,$
-   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_y=planet_y, planet_x=planet_x, use_gauss=use_gauss, silent=silent,$
    	truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    
@@ -234,28 +235,29 @@ endif
 if pre_inj eq 0 then begin
    
    print, 'pre_inj:', pre_inj
+   print, 'n_planets:', n_planets
 
    ; two options, one for radius and angle and the other for x and y
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
-   	planet_contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
+   	contrast, pxscale_sx, pxscale_dx, corr_thresh, do_cen_filter,$
    	planet_r=planet_r, planet_theta=planet_theta, use_gauss=use_gauss,$
    	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
     
    if keyword_set(planet_x) then begin
-      inject_planets, obj, output_path, n_planets, planet_contrast, pxscale_sx,$
+      inject_planets, obj, output_path, n_planets, contrast, pxscale_sx,$
       pxscale_dx, corr_thresh, do_cen_filter, planet_y=planet_y, planet_x=planet_x,$
       use_gauss=use_gauss, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod
    endif
 
 	if klip eq 1 then begin
 	
-   klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
-   	do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
-   	klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
-      annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
-      trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
-      truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx,$
-      magnify=magnify
+		klip, obj, output_path, use_injection, do_destripe, filter, bin, bin_type,$
+			do_hyper, do_annmode, combine_type, klip_fraction, klip_start_frame,$
+			klip_end_frame, fill, k_klip, angsep, anglemax, nrings, wr, n_ang,$
+			annmode_inout_sx, annmode_inout_dx, suffix, corr_thresh, do_cen_filter, coadd,$
+			trial=trial, fs=fs, neg_inj=neg_inj, truenorth_sx=truenorth_sx,$
+			truenorth_dx=truenorth_dx, pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx,$
+			magnify=magnify
       
 	endif; klip eq 1 if
 	

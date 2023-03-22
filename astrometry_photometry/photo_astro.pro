@@ -54,11 +54,11 @@ pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jare
 
 min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
-c_guess_total = -0.00940290
-c_guess_1 = -0.00958910
-c_guess_2 = -0.00914963
-c_guess_3 = -0.00969777
-c_guess_4 = -0.00924111
+c_guess_total = -0.00940320
+c_guess_1 = -0.00959084
+c_guess_2 = -0.00915081
+c_guess_3 = -0.00969534
+c_guess_4 = -0.00924411
 c_guess_nods = [c_guess_1, c_guess_2, c_guess_3, c_guess_4]
 
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
@@ -71,13 +71,13 @@ guess_3 = [277.419, 353.635]
 guess_4 = [277.377, 353.685]
 guess_nods = [[guess_1], [guess_2], [guess_3], [guess_4]]
 
-fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
+fwhm = 9.6 ; px ``width'' in reduce_lbti_HII1348.pro
 ; nx x ny grid around centroid result
 nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 
 
-initial_hc = 0.0005 ; plus or minus 0.005 %
-initial_hw = 0.1 ; plus or minus 0.1 px (centroiding seems to get us this close)
+initial_hc = 1 ; plus or minus 1 %
+initial_hw = 1 ; plus or minus 1 px (about 1 %)
 
 ; Let's go tiny! I wanna be done with this. Should take us to 6 sigfigs for each
 hc_thresh = 0.0000005 ; percentage
@@ -193,7 +193,7 @@ c_loop = [c_i : c_f : c_step]
 trial=0; Keep track of which run we're on for a given i-value
 ; Instead of writing each image and then making a cube, let's just
 ; make a cube from the beginning to write.
-cube = list()
+;cube = list()
 foreach xx, x_loop do begin; Loop over x
    foreach yy, y_loop do begin; Loop over y
 
@@ -259,14 +259,14 @@ foreach xx, x_loop do begin; Loop over x
      	   cons=[cons,contrast] & devs=[devs,deviation]
      	   means=[means,average]
      	   rhos=[rhos,planet_r] & thetas=[thetas,planet_theta]
-     	   print, 'Done.'
-     	   print, 'Adding image to cube...'
+     	   ;print, 'Done.'
+     	   ;print, 'Adding image to cube...'
      	   
      	   ;writefits, strcompress(output_path+'photometry/'+string(i)+'/'+obj+$
      	   	;'_trial_'+string(sigfig(trial,4))+'.fits', /rem), image
      	   	
      	   ; Add image to cube instead of writing
-     	   cube.Add, [[image]]
+     	   ;cube.Add, [[image]]
      	   	
      	   print, 'Done.'+newline+'Incrementing trial...'
      	   trial += 1
@@ -280,28 +280,28 @@ foreach xx, x_loop do begin; Loop over x
    endforeach; yy foreach
 endforeach; xx foreach
 
-if write eq 1 then begin
+;if write eq 1 then begin
 
-	print, 'Converting to array...'
-	cube = cube.toArray(/TRANSPOSE, /NO_COPY)
+;	print, 'Converting to array...'
+;	cube = cube.toArray(/TRANSPOSE, /NO_COPY)
 
 	; Save the results
-	save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
-		string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
-		cons,devs,means,hw,hc,rhos,thetas
+;	save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
+;		string(i)+'/'+obj+'_negative_inj_data_while_'+string(i)+'.sav', /r),xxs,yys,$
+;		cons,devs,means,hw,hc,rhos,thetas
 
 	; Combine all of the trials into a cube and write it to the same folder
-	print, newline, 'Saving the trials into one FITS cube'
+;	print, newline, 'Saving the trials into one FITS cube'
 	;folder_cube, strcompress(output_path+'photometry/'+string(i)+'/', /r),$
 		;save_path=strcompress(output_path+'photometry/while_'+$
 		;string(i)+'_', /r)
 	
-	writefits, strcompress(output_path+'photometry/nod_'+nod+'/'+string(i)+$
-		'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
+;	writefits, strcompress(output_path+'photometry/nod_'+nod+'/'+string(i)+$
+;		'/'+obj+'_while_'+string(i)+'_cube.fits',/rem), cube
 		
-	print, 'FITS cube created!''
+;	print, 'FITS cube created!''
 		
-endif
+;endif
 	
 print, 'Starting analysis', newline
 

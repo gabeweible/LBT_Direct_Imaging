@@ -119,7 +119,7 @@ endif else begin; else for only one nod
 	; magnify, if needed.
 	if magnify eq 1 then begin
 		mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
-		old_dim = (size(right_adi[*,*,0]))[1]
+		old_dim = (size(adinods))[1]
 		new_dim = old_dim * mag_factor
 		dim_diff = new_dim - old_dim
 		start_i = dim_diff / 2
