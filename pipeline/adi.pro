@@ -15,16 +15,6 @@ if nod eq 'total' then begin
 	; loop through runs/nods
 	for runs=1,4 do begin
 	
-				; Do this for runs eq 1 and runs eq 3
-		if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
-		;Do this for runs eq 1 and runs eq 2
-		if runs lt 3 then begin
-			output_folder = cube_folder + 'processed_left'
-			truenorth = truenorth_sx
-		endif else begin
-			truenorth = truenorth_dx
-			output_folder = cube_folder + 'processed_right'
-		endelse
 		;call do_adi for each run/nod
 		adiframe = do_adi(obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct,$
 			do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
@@ -53,15 +43,36 @@ if nod eq 'total' then begin
 	if magnify eq 1 then begin
 
 		mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+		old_dim = (size(right_adi[*,*,0]))[1]
+		new_dim = old_dim * mag_factor
+		dim_diff = new_dim - old_dim
+		start_i = dim_diff / 2
+		end_i = (new_dim-1) - start_i
 
 		if pxscale_sx gt pxscale_dx then begin
-			for i=0,1 do begin
-				left_adi[*,*,i] = rot(left_adi[*,*,i], 0, mag_factor, CUBIC=-0.5)
-			endfor
+		
+			new_xdim = (size(left_adi[*,*,0]))[1] * mag_factor
+			new_ydim = (size(left_adi[*,*,0]))[2] * mag_factor
+			
+			new_left_adi = CONGRID(left_adi[*,*,0], new_xdim, new_ydim, /INTERP)
+			
+			new_left_adi = [[[left_adi]], [[CONGRID(left_adi[*,*,1],$
+				new_xdim, new_ydim, /INTERP)]]]
+			
+			left_adi = new_left_adi[start_i:end_i, start_i:end_i, *]
+				
 		endif else begin
-			for j=0,1 do begin
-				right_adi[*,*,j] = rot(right_adi[*,*,j], 0, mag_factor, CUBIC=-0.5)
-			endfor
+			
+			new_xdim = (size(right_adi[*,*,0]))[1] * mag_factor
+			new_ydim = (size(right_adi[*,*,0]))[2] * mag_factor
+			
+			new_right_adi = CONGRID(right_adi[*,*,0], new_xdim, new_ydim, /INTERP)
+			
+			new_right_adi = [[[new_right_adi]], [[CONGRID(right_adi[*,*,1],$
+				new_xdim, new_ydim, /INTERP)]]]
+				
+			right_adi = new_right_adi[start_i:end_i, start_i:end_i, *]
+				
 		endelse
 	
 	endif; magnify if
@@ -84,8 +95,8 @@ if nod eq 'total' then begin
 
 	writefits, strcompress(suffix + '_total_adi.fits', /r), total_adi
 
-	; unsaturated data can just use the pupil image
-	ref_file = output_folder + dither_folder + obj_name + string(ct) + '_pupil.fits'
+	; unsaturated data can just use a median pupil image
+	ref_file = cube_folder + 'processed_left/dith1/' + obj_name + string(ct) + '_pupil.fits'
 
 	; call find_sources, if wanted.
 	if fs eq 1 then begin
@@ -93,7 +104,7 @@ if nod eq 'total' then begin
 		find_sources,strcompress(suffix + '_total_adi.fits',/r),$
 			reference=ref_file, platescale=min_pxscale,$
 			correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
-			fwhm=8.7,ct=ct,filter=filter
+			fwhm=9.6,ct=ct,filter=filter
 	  
 	endif; fs set if
 	
@@ -108,13 +119,28 @@ endif else begin; else for only one nod
 	; magnify, if needed.
 	if magnify eq 1 then begin
 		mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
+		old_dim = (size(right_adi[*,*,0]))[1]
+		new_dim = old_dim * mag_factor
+		dim_diff = new_dim - old_dim
+		start_i = dim_diff / 2
+		end_i = (new_dim-1) - start_i
 
 		if (pxscale_sx gt pxscale_dx) && (fix(nod) lt 3) then begin
-			adinods[*,*,0] = rot(adinods[*,*,0], 0, mag_factor, CUBIC=-0.5)
+		
+			new_xdim = (size(adinods))[1] * mag_factor
+			new_ydim = (size(adinods))[2] * mag_factor
+			adinods = CONGRID(adinods, new_xdim, new_ydim, /INTERP)
+			adinods = adinods[start_i:end_i, start_i:end_i]
+			
 		endif
 		
 		if (pxscale_dx gt pxscale_sx) && (fix(nod) ge 3) then begin
-			adinods[*,*,0] = rot(adinods[*,*,0], 0, mag_factor, CUBIC=-0.5)
+		
+			new_xdim = (size(adinods))[1] * mag_factor
+			new_ydim = (size(adinods))[2] * mag_factor
+			adinods = CONGRID(adinods, new_xdim, new_ydim, /INTERP)
+			adinods = adinods[start_i:end_i, start_i:end_i]
+			
 		endif
 	endif; magnify if
 	

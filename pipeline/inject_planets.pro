@@ -25,17 +25,21 @@ print, 'Planet Contrast:', planet_contrast
 
 if nod eq 'total' then begin
 	for runs=1,4 do begin
+	
 		do_inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
 			pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
 			planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,$
-			truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod, runs=runs
+			truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, runs=runs
+			
 	endfor; runs for
 endif else begin
+
 	runs = fix(nod)
 	do_inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
 			pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
 			planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,$
-			truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, nod=nod, runs=runs
+			truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, runs=runs
+			
 endelse
 
 end; inject_planets procedure end

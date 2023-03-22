@@ -219,7 +219,7 @@ endfor
       string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +  '.fits',/rem), medframe
    
    sz=500.
-   width=(3.8*1E-6) / (8.4) * 206265. / 0.0107
+   width = 9.6
    print, 'PSF Width: ',width
    PSF = psf_Gaussian(NPIX=sz, FWHM=[width,width])
    PSFN = PSF/MAX(PSF)
@@ -268,15 +268,26 @@ writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix 
 if magnify eq 1 then begin
 
 	mag_factor = max([pxscale_sx, pxscale_dx]) / min([pxscale_sx, pxscale_dx])
-
+	old_dim = (size(right_klip[*,*,0]))[1]
+	new_dim = old_dim * mag_factor
+	dim_diff = new_dim - old_dim
+	start_i = dim_diff / 2
+	end_i = (new_dim-1) - start_i
+	
 	if pxscale_sx gt pxscale_dx then begin
-		for i=0,1 do begin
-			left_klip[*,*,i] = rot(left_klip[*,*,i], 0, mag_factor, CUBIC=-0.5)
-		endfor
+		new_left_klip = CONGRID(left_klip[*,*,0], new_dim, new_dim, /INTERP)
+		
+		new_left_klip = [[[new_left_klip]], CONGRID(left_klip[*,*,1], new_dim,$
+			new_dim, /INTERP)]
+		
+		left_klip = new_left_klip[start_i:end_i, start_i:end_i, *]
 	endif else begin
-		for j=0,1 do begin
-			right_klip[*,*,j] = rot(right_klip[*,*,j], 0, mag_factor, CUBIC=-0.5)
-		endfor
+		new_right_klip = CONGRID(right_klip[*,*,0], new_dim, new_dim, /INTERP)
+		
+		new_right_klip = [[[new_right_klip]], CONGRID(right_klip[*,*,1], new_dim,$
+			new_dim, /INTERP)]
+		
+		right_klip = new_right_klip[start_i:end_i, start_i:end_i, *]
 	endelse
 	
 endif; magnify if
@@ -293,10 +304,10 @@ if keyword_set(trial) then super_suffix += '_trial_' + string(sigfig(trial, 4))
 
 writefits, strcompress(super_suffix + '_total_klip.fits', /rem), total_klip
 
-writefits, strcompress(super_suffix + '_klip_nod1.fits', /rem), nods[*,*,0]
-writefits, strcompress(super_suffix + '_klip_nod2.fits', /rem), nods[*,*,1]
-writefits, strcompress(super_suffix + '_klip_nod3.fits', /rem), nods[*,*,2]
-writefits, strcompress(super_suffix + '_klip_nod4.fits', /rem), nods[*,*,3]
+writefits, strcompress(super_suffix + '_klip_nod1.fits', /rem), left_klip[*,*,0]
+writefits, strcompress(super_suffix + '_klip_nod2.fits', /rem), left_klip[*,*,1]
+writefits, strcompress(super_suffix + '_klip_nod3.fits', /rem), right_klip[*,*,0]
+writefits, strcompress(super_suffix + '_klip_nod4.fits', /rem), right_klip[*,*,1]
 ;Where does this correction factor come from?
 ; I'm having trouble with trying to *not* manually type in the folder here.
 if keyword_set(fs) then begin
@@ -308,13 +319,13 @@ if keyword_set(fs) then begin
 		find_sources,strcompress(super_suffix + '_total_klip.fits',/rem),$
 			reference=ref_file, platescale=min_pxscale,$
 			correction_factor=((2.5E-4)/0.00013041987)*((2.0E-4)/0.00013391511),$
-			fwhm=8.7,ct=ct,filter=filter
+			fwhm=9.6,ct=ct,filter=filter
 			
 	endif; find_sources if
 endif; keyword_set(fs) if
 
 size = 500.
-width = 10.7860;(4.7*1E-6) / (8.4) * 206265. / 0.0107
+width = 9.6
 print, 'PSF Width: ',width
 PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
 PSFN = PSF / MAX(PSF)

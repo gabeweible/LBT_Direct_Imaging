@@ -5,18 +5,18 @@ FUNCTION DO_ADI, obj_name, cube_folder, use_injection, do_destripe, filter, suff
 	
 compile_opt idl2
 newline = string(10B)
-	
-	; Do this for runs eq 1 and runs eq 3
-if runs mod 2 then dither_folder = '/dith1/' else dither_folder = '/dith2/'
+
 ;Do this for runs eq 1 and runs eq 2
 if runs lt 3 then begin
-	output_folder = cube_folder + 'processed_left'
+	output_folder = cube_folder + 'processed_left/'
 	truenorth = truenorth_sx
 endif else begin
 	truenorth = truenorth_dx
-	output_folder = cube_folder + 'processed_right'
+	output_folder = cube_folder + 'processed_right/'
 endelse
 
+; Do this for runs eq 1 and runs eq 3
+if runs mod 2 then dither_folder = 'dith1/' else dither_folder = 'dith2/'
 
 if use_injection then begin
    obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +$
@@ -97,7 +97,7 @@ adiframe[where(finite(adiframe) ne 1)] = 0.
 writefits, strcompress(suffix + '_median_derot_adi.fits', /rem), adiframe
 
 size = 500.
-width = 8.72059;(3.8*1E-6) / (8.4) * 206265. / 0.0107; Where does this come from?
+width = 9.6
 print, 'PSF Width: ', width
 PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
 PSFN = PSF / MAX(PSF); N for normalized

@@ -16,7 +16,7 @@ start_time = systime(/JULIAN)
 
 ; General/Combine Parameters
 obj = 'HII1348'
-raw_path = '/Users/gabeweible/OneDrive/reasearch/kevin/raw'
+raw_path = '/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 ;'/Users/gabeweible/OneDrive/research/HII1348/kevin/raw'
 cube_start_frame = 0
 coadd = 25
