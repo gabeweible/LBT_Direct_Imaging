@@ -49,7 +49,7 @@ pro uncert, coadd=coadd, type=type, planet_spots=planet_spots, use_gauss=use_gau
 	min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 	
    contrast_total = 0.00940411; from photometry.pro and made positive
-   fwhm = 8.72059 ; px ``width'' in reduce_lbti_HII1348.pro
+   fwhm = 9.6 ; px
    real_theta_total = 1.31301; rad, from photometry.pro results
    planet_r_total = 1.14026; arcsec, from photometry.pro results
    x_total = 277.300 & y_total = 353.549

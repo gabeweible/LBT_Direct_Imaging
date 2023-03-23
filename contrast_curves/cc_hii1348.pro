@@ -18,6 +18,7 @@ pas = findgen(18)*20. + 5.
 threshold = 5.; Sigma/Significant/SNR
 pxscale = 0.0107; Plate scale for our observations [arcsec/px]
 contrast_guess = 0.005 ;guess at the starting point for the contrast curve
+pos = [277, 354] ; approx. position of HII 1348 b
 
 ; Where to find our files and put the results
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/'
@@ -108,7 +109,7 @@ for n = 0,n_elements(separations)-1 do begin
 
 		;exclude known companion
 		boxehs=20. ;source exclusion half-size
-		nimage[273-boxehs:273+boxehs-1, 356-boxehs:356+boxehs-1] = !values.f_nan
+		nimage[pos[0]-boxehs:pos[0]+boxehs-1, pos[1]-boxehs:pos[1]+boxehs-1] = !values.f_nan
 
 		; The noise is just the stdev of the image with the known companion removed
 		noise=stddev(nimage,/nan)
