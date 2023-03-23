@@ -55,20 +55,20 @@ pxscale_dx = 0.010700 ; +0.000042 or -0.000051 arcsec/pixel (from Steve and Jare
 min_pxscale = min([pxscale_sx, pxscale_dx]); Both are matched to this in KLIP/ADI
 ; starting guess for the (negative) contrast, should be pretty close.
 c_guess_total = -0.00940320
-c_guess_1 = -0.00959084
-c_guess_2 = -0.00915081
-c_guess_3 = -0.00969534
-c_guess_4 = -0.00924411
+c_guess_1 = -0.00959148
+c_guess_2 = -0.00914977
+c_guess_3 = -0.00968695
+c_guess_4 = -0.00924159
 c_guess_nods = [c_guess_1, c_guess_2, c_guess_3, c_guess_4]
 
 n_contrasts = grid_sz; Number of contrasts to test at each position, ODD
 
 ; Companion centroid guess [x,y] indices (start at 0)
 guess_total = [277.301, 353.548]
-guess_1 = [277.133, 353.696]
+guess_1 = [277.133, 353.695]
 guess_2 = [277.272, 353.125]
-guess_3 = [277.419, 353.635]
-guess_4 = [277.377, 353.685]
+guess_3 = [277.420, 353.635]
+guess_4 = [277.376, 353.685]
 guess_nods = [[guess_1], [guess_2], [guess_3], [guess_4]]
 
 fwhm = 9.6 ; px ``width'' in reduce_lbti_HII1348.pro
@@ -76,12 +76,12 @@ fwhm = 9.6 ; px ``width'' in reduce_lbti_HII1348.pro
 nx = grid_sz & ny = grid_sz ; 5 x 5 grid is default
 
 
-initial_hc = 1 ; plus or minus 1 %
+initial_hc = 0.10 ; plus or minus 10 %
 initial_hw = 1 ; plus or minus 1 px (about 1 %)
 
 ; Let's go tiny! I wanna be done with this. Should take us to 6 sigfigs for each
 hc_thresh = 0.0000005 ; percentage
-hw_thresh = 0.0005
+hw_thresh = 0.0005; px
 
 ;------------------------------[ End User Input ]---------------------------------
 
@@ -161,7 +161,7 @@ print, 'Starting loop over xx, yy around xcen, ycen'
 ;--------------------------------------------------------------------------------
 
 hc = initial_hc & hw = initial_hw
-x_avg = cen_x & y_avg = cen_y
+x_avg = guess[0] & y_avg = guess[1]
 con = c_guess
 ; Loop until we're within BOTH of our thresholds
 i = 1
@@ -350,8 +350,9 @@ endif; write eq 1 if
 
 ; Reset stuff for the next loop iteration:
 x_avg = x_best & y_avg = y_best
-hw *= 0.8 & hc *= 0.8 ; Shrink 3D ``grid'' by 20% in all dimensions.
 con = best_con
+; Shrink 3D ``grid'' to the inside level of the last iteration
+hw *= 1 - (1/grid_sz) & hc *= 1 - (1/grid_sz)
 
 i += 1; increment while loop counter
 ENDWHILE; thresholds loop
