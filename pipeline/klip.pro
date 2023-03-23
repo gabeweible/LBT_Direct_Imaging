@@ -246,20 +246,7 @@ endfor; Runs for
 
 ; Do this stuff at the end to combine
 left_klip = nods[*,*,0:1]
-left_klip_mean = mean(left_klip, dim=3)
-writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' +$
-   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
-   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
-   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
-   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), left_klip_mean
-
 right_klip = nods[*,*,2:3]
-right_klip_mean = mean(right_klip, dim=3)
-writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' +$
-   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
-   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
-   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
-   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), right_klip_mean
 
 ; Get the factor we need to magnify the side with the greater pxscale by
 ; Bigger pxscale means less pixels per arcsec so we need to scale it up to get
@@ -277,23 +264,37 @@ if magnify eq 1 then begin
 	if pxscale_sx gt pxscale_dx then begin
 		new_left_klip = CONGRID(left_klip[*,*,0], new_dim, new_dim, /INTERP)
 		
-		new_left_klip = [[[new_left_klip]], CONGRID(left_klip[*,*,1], new_dim,$
-			new_dim, /INTERP)]
+		new_left_klip = [[[new_left_klip]], [[CONGRID(left_klip[*,*,1], new_dim,$
+			new_dim, /INTERP)]]]
 		
 		left_klip = new_left_klip[start_i:end_i, start_i:end_i, *]
 	endif else begin
 		new_right_klip = CONGRID(right_klip[*,*,0], new_dim, new_dim, /INTERP)
 		
-		new_right_klip = [[[new_right_klip]], CONGRID(right_klip[*,*,1], new_dim,$
-			new_dim, /INTERP)]
+		new_right_klip = [[[new_right_klip]], [[CONGRID(right_klip[*,*,1], new_dim,$
+			new_dim, /INTERP)]]]
 		
 		right_klip = new_right_klip[start_i:end_i, start_i:end_i, *]
 	endelse
 	
 endif; magnify if
 
+left_klip_mean = (left_klip[*,*,0] + left_klip[*,*,1]) / 2
+writefits, strcompress(cube_folder + 'combined/' + obj + '_left_klip' + suffix + '_bin_' +$
+   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), left_klip_mean
+
+right_klip_mean = (right_klip[*,*,0] + right_klip[*,*,1]) / 2
+writefits, strcompress(cube_folder + 'combined/' + obj + '_right_klip' + suffix + '_bin_' +$
+   string(sigfig(bin,1)) + '_type_' + bin_type + '_comb_type_'+combine_type+'_k_klip_'+$
+   string(sigfig(k_klip,1))+'_angsep_'+string(sigfig(angsep,4))+'_angmax_'+$
+   string(sigfig(anglemax,3))+'_nrings_'+string(sigfig(nrings, 2))+'_nang_'+$
+   string(sigfig(n_ang,2)) + '_neg_inj_' + string(neg_inj) +   '.fits', /rem), right_klip_mean
+
 ; Average the averages for both sides
-total_klip = (mean(left_klip, dim=3) + mean(right_klip, dim=3)) / 2
+total_klip = (left_klip_mean + right_klip_mean) / 2
 
 super_suffix = cube_folder + 'combined/' + obj + '_bin_' + string(sigfig(bin,1)) + '_type_' +$
    bin_type + '_comb_type_'+combine_type+'_k_klip_'+string(sigfig(k_klip,1))+'_angsep_'+$

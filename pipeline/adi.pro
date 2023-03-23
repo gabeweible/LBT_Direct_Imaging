@@ -78,10 +78,10 @@ if nod eq 'total' then begin
 	endif; magnify if
 
 	; get means for each side
-	right_adi_mean = mean(right_adi, dim=3)
+	right_adi_mean = (right_adi[*,*,0] + right_adi[*,*,1]) / 2
 	writefits, strcompress(suffix +  '_right_adi.fits', /rem), right_adi_mean
 
-	left_adi_mean = mean(left_adi, dim=3)
+	left_adi_mean = (left_adi[*,*,0] + left_adi[*,*,1]) / 2
 	writefits, strcompress(suffix + '_left_adi.fits', /rem), left_adi_mean
 
 	; Average the averages for both sides

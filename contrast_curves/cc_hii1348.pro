@@ -12,12 +12,12 @@ newline = string(10B)
 separations=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3,$
 				 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5]; Arcsec
 
-; Position angles, 18 of them all separated by 20 deg
+; Position angles (sorta), 20 of them all separated by 18 deg
 ; starting at 5 deg
 pas = findgen(18)*20. + 5. 
 threshold = 5.; Sigma/Significant/SNR
 pxscale = 0.0107; Plate scale for our observations [arcsec/px]
-contrast_guess = 0.005 ;guess at the starting point for the contrast curve
+contrast_guess = 0.0035 ;guess at the starting point for the contrast curve
 pos = [277, 354] ; approx. position of HII 1348 b
 
 ; Where to find our files and put the results
@@ -77,7 +77,7 @@ for n = 0,n_elements(separations)-1 do begin
 		;name='S37'
 		;reduce_near,rho=rho,theta=theta,contrast=contrast,/block_burn,aa=aa,bb=bb,ab=ab,ba=ba
 		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj=0,$
-		uncert=0, neg_inj=0, klip=1
+		uncert=0, neg_inj=0, klip=1, fs=0, nod='total'
 		
 		;read image
 		image=readfits(strcompress(output_path + 'combined/' + 'HII1348' +$

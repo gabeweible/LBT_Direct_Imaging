@@ -235,7 +235,6 @@ endif
 if pre_inj eq 0 then begin
    
    print, 'pre_inj:', pre_inj
-   print, 'n_planets:', n_planets
 
    ; two options, one for radius and angle and the other for x and y
    if keyword_set(rho) then inject_planets, obj, output_path, n_planets,$
