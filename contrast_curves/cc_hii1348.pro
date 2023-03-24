@@ -16,9 +16,9 @@ separations=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3,$
 ; starting at 5 deg
 pas = findgen(18)*20. + 5. 
 threshold = 5.; Sigma/Significant/SNR
-pxscale = 0.0107; Plate scale for our observations [arcsec/px]
+pxscale = 0.010648; Plate scale for our observations [arcsec/px]
 contrast_guess = 0.0035 ;guess at the starting point for the contrast curve
-pos = [277, 354] ; approx. position of HII 1348 b
+pos = [277.3, 353.6] ; approx. position of HII 1348 b
 
 ; Where to find our files and put the results
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/'

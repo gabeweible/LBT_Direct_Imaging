@@ -22,6 +22,8 @@ pro find_sources,frame,reference=reference,sigma=sigma,correction_factor=correct
 minvalue=minvalue,maxvalue=maxvalue,no_2d=no_2d,no_smooth=no_smooth,ct=ct,filter=filter,$
 do_cen_filter=do_cen_filter
 
+; Trying this out...
+SET_PLOT, 'Z'
 
 ;tunable parameters
 
