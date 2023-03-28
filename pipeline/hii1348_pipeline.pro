@@ -38,13 +38,13 @@ truenorth_dx = 1.001 ; + 0.254 or -0.237 deg (from Steve and Jared)
 if keyword_set(outpath) then output_path=outpath
 
 ; Sky sub parameters
-allowed_coadds = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200]
-if total(allowed_coadds eq coadd) ne 1 then begin
-  print, 'Error: invalid coadd value (must be a factor of 200)'
-  stop
-endif
+;allowed_coadds = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200]
+;if total(allowed_coadds eq coadd) ne 1 then begin
+;  print, 'Error: invalid coadd value (must be a factor of 200)'
+;  stop
+;endif
 fs_start = 400 / coadd & fs_end = 599 / coadd
-print, 'Coadd:', coadd
+;print, 'Coadd:', coadd
 
 ; Centering parameters
 do_block_right = 1
@@ -59,11 +59,6 @@ do_cen_median_sub = 0
 corr_thresh = 0.994 ; Split the difference
 
 ; Passed values from keyword arguments (for contrast curve generation or astrometry/photometry)
-if (keyword_set(rho) and keyword_set(theta)) or (keyword_set(planet_x) and keyword_set(planet_y)) then begin
-   use_injection=1
-endif else begin
-   use_injection=0
-endelse
 if neg_inj eq 1 then n_planets=1
 if keyword_set(use_gauss) then use_gauss=[use_gauss]
 if keyword_set(rho) then planet_theta=[theta]
@@ -85,14 +80,20 @@ normal = 1; Normalize ADI frames to reduce residuals around the star
 ;fs = 1; Run find_sources within ADI.pro; Set in a kwarg now...
 if not keyword_set(fs) then fs = 0; Assume it's NOT fine?
 
-if keyword_set(rho) or keyword_set(planet_x) then use_injection=1 else use_injection = 0
+if keyword_set(rho) or keyword_set(planet_x) then begin
+	use_injection=1
+	do_annmode=1
+endif else begin
+	use_injection=0
+	do_annmode=0
+endelse
+
 do_destripe = 1
 filter = 17.
 bin = 3
 bin_type = 'mean'
 do_hyper = 0
 
-if keyword_set(rho) or keyword_set(planet_x) then do_annmode=1 else do_annmode=0
 combine_type = 'nwadi'
 klip_fraction = 0
 klip_start_frame = 75
@@ -133,13 +134,13 @@ Ky_sx = [[-2.26409123e+00, 9.93175401e-01, -6.67169688e-06, 8.08275391e-09],$
 
 ;------------------------------[ TWO SOLUTION OVERRIDE ]--------------------------
  
-if keyword_set(two_soln_override) && two_soln_override eq 1 then begin
-	pxscale_dx = pxscale_sx
-   Kx_dx = Kx_sx
-   Ky_dx = Ky_sx
-   print, 'Two astrometric solution override active, using SX soln for both sides'
-   wait, 2; wait for two seconds to see the message
-endif; two_soln_overrride if
+;if keyword_set(two_soln_override) && two_soln_override eq 1 then begin
+;	pxscale_dx = pxscale_sx
+ ;  Kx_dx = Kx_sx
+  ; Ky_dx = Ky_sx
+ ;  print, 'Two astrometric solution override active, using SX soln for both sides'
+ ;  wait, 2; wait for two seconds to see the message
+;endif; two_soln_overrride if
 
 ;------------------------------[ End User Input ]---------------------------------
 

@@ -165,25 +165,27 @@ x_avg = guess[0] & y_avg = guess[1]
 con = c_guess
 ; Loop until we're within BOTH of our thresholds
 i = 1
-; make a folder to put our stuff in
-file_mkdir, strcompress(output_path + 'photometry/nod_' + nod, /r)
+
 WHILE (hc gt hc_thresh) || (hw gt hw_thresh) DO BEGIN
 
 ; Initialize arrays for our results
 xxs=[] & yys=[] & cons=[] & devs=[] & means=[] & rhos=[] & thetas=[]
 
 file_mkdir,$
-strcompress(output_path + 'photometry/nod_' + nod + '/' + string(i), /r)
+strcompress(output_path + 'photometry/' + string(i), /r)
 
 ; Define lower bounds, upper bounds, and step sizes for our nested loops (grid search)
-x_i = x_avg-hw & x_f = x_avg+hw
+x_i = x_avg-hw
+x_f = x_avg+hw
 x_step = ((x_avg+hw)-(x_avg-hw))/(nx-1)
 
-y_i = y_avg-hw & y_f = y_avg+hw
+y_i = y_avg-hw
+y_f = y_avg+hw
 y_step = ((y_avg+hw)-(y_avg-hw))/(ny-1)
 
-c_i = con*(1.0-hc) & c_f = con*(1.0+hc)
-c_step = (con*(1.0+hc)-con*(1.0-hc))/(n_contrasts-1)
+c_i = con*(1.0-hc)
+c_f = con*(1.0+hc)
+c_step = (c_f-c_i)/(n_contrasts-1)
 
 ; Create arrays to loop through (for some reason using normal for loops didn't work...)
 x_loop = [x_i : x_f : x_step]
@@ -217,7 +219,7 @@ foreach xx, x_loop do begin; Loop over x
      	   uncert=uncert, klip=klip, fs=0, extra=nod, nod=nod; Inject and run ADI
       
      	   ; Read in the total KLIP or ADI file after the negative injection
-     	   print, 'Reading in neg-injected file'
+     	   ;print, 'Reading in neg-injected file'
 ;     	   if type eq 'KLIP' then begin
 ;     	       
 ;     	      image=readfits(strcompress(output_path+'combined/'+obj+'_bin_'+string(sigfig(bin,1))+$
@@ -243,18 +245,18 @@ foreach xx, x_loop do begin; Loop over x
 				endelse; nod neq 'total' else
 					
 ;     	   endif
-         print, 'Read in image after negative injection'
+         ;print, 'Read in image after negative injection'
       
      	   ; Calculate the standard deviation (and the mean value) for the box around where we
    	   ; injected the negative planet over the real companion
-   	   print, 'Finding stdev and mean...'
+   	   ;print, 'Finding stdev and mean...'
 	      deviation = stdev(image[x_avg-20.:x_avg+20., y_avg-20.:y_avg+20.], mean)
 	      print,'Standard deviation (40px x 40px square) =', deviation
      	   average = mean
      	   print, 'Mean =', average
      	   
      	   ; Append results to arrays
-     	   print, 'Appending to arrays...'
+     	   ;print, 'Appending to arrays...'
      	   xxs=[xxs,xx] & yys=[yys,yy]
      	   cons=[cons,contrast] & devs=[devs,deviation]
      	   means=[means,average]
@@ -268,9 +270,9 @@ foreach xx, x_loop do begin; Loop over x
      	   ; Add image to cube instead of writing
      	   ;cube.Add, [[image]]
      	   	
-     	   print, 'Done.'+newline+'Incrementing trial...'
+     	   ;print, 'Done.'+newline+'Incrementing trial...'
      	   trial += 1
-     	   print, 'Done.'
+     	   ;print, 'Done.'
      	   
      	   ; Convert to scalars so that IDL doens't throw a fit
      	   yy=yy[0]
@@ -303,7 +305,7 @@ endforeach; xx foreach
 		
 ;endif
 	
-print, 'Starting analysis', newline
+;print, 'Starting analysis', newline
 
 min_devs = WHERE(devs eq MIN(devs))
 median_i = median(min_devs)
@@ -342,7 +344,7 @@ print, 'Contrast:', string(best_con), newline
 
 if write eq 1 then begin
 
-	save, filename=strcompress(output_path+'photometry/nod_'+nod+'/'+$
+	save, filename=strcompress(output_path+'photometry/'+$
 		string(i)+'/'+obj+'_results_while_'+string(i)+'.sav', /r), x_best, y_best,$
 		left, up, RA, DEC,rho_px, theta, rho_arcsec, PA, best_con
 
@@ -352,17 +354,17 @@ endif; write eq 1 if
 x_avg = x_best & y_avg = y_best
 con = best_con
 ; Shrink 3D ``grid'' to the inside level of the last iteration
-hw *= 1 - (1/grid_sz) & hc *= 1 - (1/grid_sz)
+hw *= (1. - (1./grid_sz)) & hc *= (1. - (1./grid_sz))
 
 i += 1; increment while loop counter
 ENDWHILE; thresholds loop
 
 ;-----------------------------------------------------------------------------------
 ; Save the FINAL results
-save,filename=strcompress(output_path+'photometry/nod_'+nod+'/'+obj+$
+save,filename=strcompress(output_path+'photometry/'+obj+$
 	'_negative_inj_data_final.sav',/r),xxs,yys,cons,devs,means
 	 
-photo_astro_to_csv, strcompress(output_path+'photometry/nod_'+nod+'/'+obj+$
+photo_astro_to_csv, strcompress(output_path+'photometry/'+obj+$
 	'_negative_inj_data_final.sav',/r)
 
 ;-----------------------------------------------------------------------------------

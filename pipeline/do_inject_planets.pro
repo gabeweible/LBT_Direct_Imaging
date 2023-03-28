@@ -29,7 +29,7 @@ obj_cube = readfits(output_folder + dither_folder + obj_name + string(ct) +$
 ref = readfits(output_folder + dither_folder + obj_name + string(ct) +$
 	'_pupil.fits')
 	
-if use_gauss then ref = gauss2dfit(ref, /tilt)
+if use_gauss eq 1 then ref = gauss2dfit(ref, /tilt)
 
 x_size = (size(ref))[1] & y_size = (size(ref))[2]
 ;half-sizes
