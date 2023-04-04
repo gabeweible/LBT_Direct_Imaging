@@ -156,7 +156,7 @@ print, 'GCNTRD xcen, ycen:', XCEN, YCEN
 cen_x += XCEN & cen_x *= 0.5 & cen_y += YCEN & cen_y *= 0.5
 print, 'Mean xcen, ycen:', cen_x, cen_y, newline
 ; This will get us the best place to inject our planet at
-print, 'Starting loop over xx, yy around xcen, ycen'
+print, 'Starting loop over xx, yy around cen_x, cen_y, or guess value'
 
 ;--------------------------------------------------------------------------------
 
