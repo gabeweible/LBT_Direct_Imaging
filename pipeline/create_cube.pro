@@ -2,6 +2,7 @@ pro create_cube, object_name, raw_fits_path, start_frame, coadd, output_path
 ; Current run:
 ; 'HII1348', '~/OneDrive/Research/HII1348/HII1348/raw', 0, 5., '~/OneDrive/Research/HII1348/testing4/'
 compile_opt idl2; 32-bit Integers and only square brackets for array indexing
+newline = string(10B)
 ;+
 ; NAME:
 ;       CREATE_CUBE
@@ -65,6 +66,7 @@ k = 1
 print, 'Initialized successfully, beginning cube creation loop...'
 for ii = start_frame, filecount-1 do begin
    print, 'File index', ii, '/', filecount-1
+   print, 'Reading in:', files[ii], newline
    frame = readfits(files[ii], head)
    angle=fxpar(head, 'LBT_PARA')
    dit = fxpar(head,'ITIME')
