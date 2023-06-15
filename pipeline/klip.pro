@@ -19,10 +19,12 @@ for runs=1,4 do begin
       output_folder = cube_folder + 'processed_left/'
       truenorth = truenorth_sx
       annmode_inout = annmode_inout_sx
+      pxscale = pxscale_sx
    endif else begin
    	output_folder = cube_folder + 'processed_right/'
       truenorth = truenorth_dx
       annmode_inout = annmode_inout_dx
+      pxscale - pxscale_dx
    endelse
 
 obj=strcompress(obj,/rem)
@@ -173,16 +175,16 @@ print, 'Run:', runs
 
 if do_hyper ne 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii,$
     trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4,$
-    pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr,$
+    pixelscale=pxscale, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr,$
     n_ang =n_ang, num=758) 
 
 if do_hyper eq 1 and do_annmode ne 1 then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii,$
    trial=trial, anglemask=anglemask, distmask=distmask, posang=angles, wl=4.7,diam=8.4,$
-   pixelscale=0.0107, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang,$
+   pixelscale=pxscale, angsep=angsep,anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang,$
    num=758, /hyper) 
 
 if do_annmode then klip_cube[*,*,ii] = adiklip(obj_cube, k_klip, target=ii, anglemask=anglemask,$
-   distmask=distmask, trial=trial, posang=angles, wl=4.7,diam=8.4, pixelscale=0.0107, angsep=angsep,$
+   distmask=distmask, trial=trial, posang=angles, wl=4.7,diam=8.4, pixelscale=pxscale, angsep=angsep,$
    anglemax=anglemax, obj=obj,nrings=nrings, wr =wr, n_ang =n_ang, num=758, annmode_inout=annmode_inout) 
 
 

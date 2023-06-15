@@ -90,20 +90,23 @@ endelse
 
 do_destripe = 1
 filter = 17.
+
 bin = 3
 bin_type = 'mean'
 do_hyper = 0
-
 combine_type = 'nwadi'
+
+; Start and end frame if only using KLIP on a fraction of dataset (start and end)
 klip_fraction = 0
 klip_start_frame = 75
 klip_end_frame = 150
+
 fill = 0
-k_klip = 7
+k_klip = 7 ; Number of KLIP components (eigenimages) to keep
 angsep= 1.
 anglemax = 360.
-nrings = 4.
-n_ang = 2
+nrings = 4. ; Number of annuli for KLIP
+n_ang = 2 ; Number of segments in each annulus for KLIP
 
 ; Annulus inner and outer radii already setup for HII 1348 b; In px?
 annmode_inout_sx = [83, 143]
