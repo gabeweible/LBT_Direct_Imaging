@@ -274,7 +274,7 @@ foreach xx, x_loop do begin; Loop over x
      	   trial += 1
      	   ;print, 'Done.'
      	   
-     	   ; Convert to scalars so that IDL doens't throw a fit
+     	   ; Convert to scalars so that IDL doesn't throw a fit
      	   yy=yy[0]
      	   xx=xx[0]
      	   
