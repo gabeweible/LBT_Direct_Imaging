@@ -122,7 +122,7 @@ for n=0,n_elements(separations)-1 do begin
 		contrast=contrasti
 
 			if style eq 'klip' then image=readfits(root_dir+reduced_dir+'BD45_left_klip.fits',hd)
-			if style eq 'adi' then mage=readfits(root_dir+reduced_dir+'BD45_left_adi.fits',hd)
+			if style eq 'adi' then image=readfits(root_dir+reduced_dir+'BD45_left_adi.fits',hd)
 		
 			xs=(size(image))(1) & ys=(size(image))(2)
 			xhs=float(xs)/2. & yhs=float(ys)/2. ;half-sizes
