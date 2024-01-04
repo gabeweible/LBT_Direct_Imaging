@@ -24,7 +24,7 @@ for runs=1,4 do begin
    	output_folder = cube_folder + 'processed_right/'
       truenorth = truenorth_dx
       annmode_inout = annmode_inout_dx
-      pxscale - pxscale_dx
+      pxscale = pxscale_dx
    endelse
 
 obj=strcompress(obj,/rem)

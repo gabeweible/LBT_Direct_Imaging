@@ -1,4 +1,4 @@
-pro cc_hii1348_v2
+pro cc_hii1348_v2, klip=klip
 COMPILE_OPT IDL2
 
 ; Trying this out...
@@ -24,7 +24,7 @@ pos = [277.3, 353.6] ; approx. position of HII 1348 b
 output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/';'/Users/gabe/reduction/macbook_25/'
 
 ; Rotate/KLIP parameters (needed to read in our total_klip file)
-klip = 0; 1 to use KLIP, 0 to use ADI
+if keyword_set(klip) then klip=[klip]
 bin = 3
 bin_type = 'mean'
 combine_type = 'nwadi'
@@ -158,10 +158,10 @@ for n = 0,n_elements(separations)-1 do begin
 		; Maybe gt 1.0? idk
 		; 2.0?
 		; Putting it to 5.0 just so that I (probably) won't have to worry about it anymore...
-		if runs gt 5 and abs(1.-(result/threshold) ) gt 5.0 then begin & print, 'abs:',$
-			abs(1.-(result/threshold) ) & result=threshold & contrasts[n] = !values.f_nan &$
-			print, "Hey dude, I'm setting the contrast to NaN now..." & nan_problem = 1 &$
-			stop & endif
+		;if runs gt 5 and abs(1.-(result/threshold) ) gt 5.0 then begin & print, 'abs:',$
+		;	abs(1.-(result/threshold) ) & result=threshold & contrasts[n] = !values.f_nan &$
+		;	print, "Hey dude, I'm setting the contrast to NaN now..." & nan_problem = 1 &$
+		;	stop & endif
 
 		if runs gt 5 and abs(1.-(result/threshold) ) le 0.1 then result=threshold 
 		
