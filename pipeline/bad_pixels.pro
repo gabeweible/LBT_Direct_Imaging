@@ -1,4 +1,4 @@
-pro bad_pixels, output_folder, obj_name
+pro bad_pixels, output_folder, obj_name, stripe
 ;'~/OneDrive/Research/HII1348/testing/', 'HII1348' for current run
 compile_opt idl2
 
@@ -48,7 +48,11 @@ print, 'Object cube size:', size(obj_cube)
 
 if (size(obj_cube))[3] gt 250 then badpix = mean(obj_cube[*,*,0:250], dim=3); mean image for the first 251(?) frames
 if (size(obj_cube))[3] lt 251 then badpix = mean(obj_cube[*,*,0:(size(obj_cube))[3]-1], dim=3); mean image for the first 251(?) frames
-badpix_mask = replicate(1, 2048, 1024) ; Initialize the mask with all 1s
+
+ ; Initialize the mask with all 1s
+if stripe eq 'center1024' then badpix_mask = replicate(1, 2048, 1024)
+if stripe eq 'second512' then badpix_mask = replicate(1, 2048, 512)
+
 boxhsize = 8 & threshold = 5 & n_bad_pixels = 0. & n_tests = 0. ; 5 factor threshold to conclude a pixel is bad
 ;Trying a factor of 4...
 for xx = 1.*boxhsize, (size(obj_cube))[1]-1-(1.*boxhsize) do begin; (size(obj_cube))[2] is our image width (x dimension)

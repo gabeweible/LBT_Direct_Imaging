@@ -1,7 +1,7 @@
-FUNCTION DO_ADI, obj_name, cube_folder, use_injection, do_destripe, filter, suffix, ct,$
+FUNCTION DO_ADI, obj_name, half_cropped_sz, cube_folder, use_injection, do_destripe, filter, ct,$
 	do_cen_filter, coadd, fs=fs, neg_inj=neg_inj, normal=normal, uncert=uncert,$
 	silent=silent, truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx,$
-	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify, nod=nod, runs=runs
+	pxscale_sx=pxscale_sx, pxscale_dx=pxscale_dx, magnify=magnify, runs=runs, fwhm=fwhm
 	
 compile_opt idl2
 newline = string(10B)
@@ -72,12 +72,12 @@ for ii=0, n_frames - 1 do begin
    adi_cube[*,*,ii] = rot(adi_cube[*,*,ii], -angles[ii] - truenorth, /interp)
 endfor; rotate if
 
-suffix = cube_folder + 'combined/' + obj_name + 'ct_' + string(ct)$
+adi_suffix = cube_folder + 'combined/' + obj_name + 'ct_' + string(ct)$
 	+ 'filt_'  +  string(filter) + '_neg_inj_' + string(neg_inj) + '_uncert_' +$
 	string(uncert)
 
 ; Write the de-rotated obj_cube (No ADI)
-writefits, strcompress(suffix + '_cube_skysub_cen_filt_derot.fits', /rem),$
+writefits, strcompress(adi_suffix + '_cube_skysub_cen_filt_derot.fits', /rem),$
 	obj_cube
 
 combine_type = 'nwadi'
@@ -86,7 +86,7 @@ if combine_type eq 'median' then medarr, obj_cube, medframe
 if combine_type eq 'mean' then medframe = mean(obj_cube, dim=3)
 if combine_type eq 'nwadi' then medframe = nw_ang_comb(obj_cube, angles)
 
-writefits, strcompress(suffix + '_median_derot.fits', /rem), medframe
+writefits, strcompress(adi_suffix + '_median_derot.fits', /rem), medframe
 
 if combine_type eq 'median' then medarr, adi_cube, adiframe
 if combine_type eq 'mean' then adiframe = mean(adi_cube, dim=3)
@@ -94,17 +94,17 @@ if combine_type eq 'nwadi' then adiframe = nw_ang_comb(adi_cube, angles)
 
 adiframe[where(finite(adiframe) ne 1)] = 0.
 
-writefits, strcompress(suffix + '_median_derot_adi.fits', /rem), adiframe
+writefits, strcompress(adi_suffix + '_median_derot_adi.fits', /rem), adiframe
 
-size = 500.
-width = 9.6
+sz = 2*half_cropped_sz
+width = fwhm
 print, 'PSF Width: ', width
-PSF = psf_Gaussian(npixel=size, FWHM=[width, width])
+PSF = psf_Gaussian(npixel=sz, FWHM=[width, width])
 PSFN = PSF / MAX(PSF); N for normalized
 adiframe_c = convolve(adiframe, PSFN)
 
 print, 'Writing FITS for run: ', runs, ' ...'
-writefits, strcompress(suffix + '_median_derot_adi_conv.fits', /rem), adiframe_c
+writefits, strcompress(adi_suffix + '_median_derot_adi_conv.fits', /rem), adiframe_c
 print, 'FITS for run: ', runs, ' written!', newline
 
 return, adiframe

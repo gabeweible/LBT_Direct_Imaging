@@ -1,4 +1,4 @@
-pro create_cube, object_name, raw_fits_path, start_frame, coadd, output_path
+pro create_cube, object_name, raw_fits_path, start_frame, coadd, output_path, cds
 ; Current run:
 ; 'HII1348', '~/OneDrive/Research/HII1348/HII1348/raw', 0, 5., '~/OneDrive/Research/HII1348/testing4/'
 compile_opt idl2; 32-bit Integers and only square brackets for array indexing
@@ -22,6 +22,9 @@ newline = string(10B)
 ;               if coadd is set to 1, then all frames will be added
 ;
 ;       output_path = String folder to write the data cube FITS into
+;
+;		  cds = 'midcds' for second frame - first, 'endcds' for third - first,
+;              and 'last' to just use the third frame
 ;       
 ; RESTRICTIONS:
 ;       (1) Make sure that object_name, raw_fits_path, and output_path are string literals
@@ -40,6 +43,7 @@ newline = string(10B)
 ;       WRITTEN, Kevin Wagner ????
 ;       Moved into this procedure and edited by Gabriel Weible 2021
 ;       Gabriel Weible 2022 changed coadds to be a mean instead of a sum
+;       Gabriel Weible 07/2024 added flexibility for CDS with reading up the ramp
 ;-
 
 starttime=systime(/JULIAN)
@@ -71,8 +75,17 @@ for ii = start_frame, filecount-1 do begin
    angle=fxpar(head, 'LBT_PARA')
    dit = fxpar(head,'ITIME')
    flag = fxpar(head,'FLAG')
-         ;perform CDS
-         frame = reform(frame[*,*,1] - frame[*,*,0])
+         ;perform CDS; UPDATED THIS FOR DIFFERENT CDS WITH READING UP THE RAMP
+         if cds eq 'midcds' then begin
+         	frame = reform(frame[*,*,1] - frame[*,*,0]); second - first CDS
+         	
+         endif else if cds eq 'endcds' then begin
+         	frame = reform(frame[*,*,2] - frame[*,*,0]); third - first CDS
+         	
+         endif else if cds eq 'last' then begin
+         	frame = reform(frame[*,*,2]); just the third frame
+         endif
+         
          ; Some frames have the wrong dimensions and need cropped
          if (size(frame))[2] gt 2000 then frame = frame[*, 512:1535]; 1535 = 2048 - 512 - 1?
          ; Add to our current coadd frame as a sum, and the same with the current coadd angle
