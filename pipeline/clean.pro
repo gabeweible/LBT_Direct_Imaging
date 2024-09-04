@@ -28,8 +28,8 @@ if stripe eq 'center1024' then for runs=1,4 do begin
 
 	for xx = 0, (size(cube))[2] - 1 do begin
 		for yy = 0, (size(cube))[2] - 1 do begin
-			;Pythagorean theorem baby! (everything within r = 20px is divided into oblivion)
-			if sqrt( ((xx - half_cropped_sz)^2.) + ((yy - half_cropped_sz)^2.) ) gt 20 then cube2[xx,yy,*] *= 0.0000001
+			;Pythagorean theorem baby! (everything outside of r = 20px is divided into oblivion)
+			if sqrt( ((xx - half_cropped_sz-1)^2.) + ((yy - half_cropped_sz-1)^2.) ) gt 20 then cube2[xx,yy,*] *= 0.0000001
 		endfor
 	endfor
 
