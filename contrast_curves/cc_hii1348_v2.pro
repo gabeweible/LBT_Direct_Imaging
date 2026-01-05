@@ -1,4 +1,5 @@
-pro cc_hii1348_v2, klip=klip
+pro cc_hii1348_v2, klip=klip, k_klip=k_klip, coadd=coadd, extra=extra, half_pas=half_pas, third_pas=third_pas
+; CURRENT CODE (01/29/2025)
 COMPILE_OPT IDL2
 
 ; Trying this out...
@@ -12,23 +13,32 @@ newline = string(10B)
 separations=[0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.25, 1.35,$
 				 1.45, 1.55, 1.65, 1.75, 1.85, 1.95, 2.05]; Arcsec
 
-; Position angles (sorta), 20 of them all separated by 18 deg
+; Position angles (sorta), 18 of them all separated by 20 deg
 ; starting at 5 deg
-pas = findgen(18)*20. + 5. 
+pas = findgen(18)*20. + 5.
+
+if half_pas eq 1 then remove, [0, 2, 4, 6, 8, 10, 12, 14, 16], pas; this should do every other?
+if third_pas eq 1 then remove, [1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17], pas; this should do every 2/third?
+print, 'Number of PAs to test:', n_elements(pas)
+
 threshold = 5.; Sigma/Significant/SNR
 pxscale = 0.010648; Plate scale for our observations [arcsec/px]
 contrast_guess = 0.0035 ;guess at the starting point for the contrast curve
 pos = [277.3, 353.6] ; approx. position of HII 1348 b
 
 ; Where to find our files and put the results
-output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/';'/Users/gabe/reduction/macbook_25/'
+;output_path = '/Users/gabeweible/OneDrive/research/HII1348/macbook_25/';'/Users/gabe/reduction/macbook_25/'
+output_path = '/Users/gweible/Library/CloudStorage/OneDrive-UniversityofArizona/research/HII1348/macbook_'+$
+	strcompress(coadd, /r)
+if keyword_set(extra) then output_path += '_'+strcompress(extra, /r)
+output_path += '/'
 
 ; Rotate/KLIP parameters (needed to read in our total_klip file)
 if keyword_set(klip) then klip=[klip]
 bin = 3
 bin_type = 'mean'
 combine_type = 'nwadi'
-k_klip = 7
+k_klip = k_klip
 angsep= 1.
 anglemax = 360.
 nrings = 4.
@@ -64,8 +74,10 @@ for n = 0,n_elements(separations)-1 do begin
 		print, 'Run:', runs
 		runs += 1
 
-		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj=0,$
-		uncert=0, neg_inj=0, klip=klip, fs=0, nod='total'
+		print, 'running HII 1348B pipeline for k_klip = ', k_klip
+		hii1348_pipeline, rho=rho, theta=theta, contrast=contrast, pre_inj=0, neg_inj=0, coadd=25, uncert=0, klip=klip,$
+			use_gauss=0, extra='kklip_'+strcompress(k_klip, /r), k_klip=k_klip,$
+			nod='total', adi=0
 		
 		;read image
 		if klip eq 1 then begin ; KLIP	
@@ -80,7 +92,7 @@ for n = 0,n_elements(separations)-1 do begin
 		endif else begin; ADI
 		
 			image = readfits(strcompress(output_path + 'combined/' +$
-				'HII1348ct_0.994000filt_17.0000_neg_inj_0_uncert_0_total_adi.fits', /rem))
+				'HII1348ct_0.994000filt_0.00000_neg_inj_0_uncert_0_total_adi.fits', /rem))
 
 		endelse
 		; remove zeros
@@ -185,7 +197,7 @@ for n = 0,n_elements(separations)-1 do begin
 			'HII1348_contrastcurve_images.fits',/rem),imgs
 			
 	endwhile
-endfor ;n
+endfor ;n/separations
 
 curves=[ [curves], [contrasts] ]
 
@@ -194,7 +206,7 @@ save,filename=strcompress(output_path + 'HII1348_contrast_output.sav',/rem),$
 ; Write curves to a CSV.
 WRITE_CSV, strcompress(output_path + 'HII1348_contrast_output.csv',/rem), curves
 
-endfor ;m
+endfor ;m/PAs
 
 print, 'Completed contrast curve generation in ',(systime(/JULIAN)-contstarttime)*$
 	86400./60.,' minutes.'

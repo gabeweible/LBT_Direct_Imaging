@@ -1,4 +1,6 @@
 function fshift,image,delx,dely
+; Strict arrays (square brackets only) and 32-bit integers as default, instead of 16
+compile_opt IDL2
 ;+
 ;			fshift
 ;

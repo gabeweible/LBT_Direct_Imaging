@@ -1,11 +1,12 @@
 function REDUCE_MATRIX, matrix
+compile_opt IDL2
 
 ;Function to get rid of NaN values in 2d matrix
 ;Assumes that the size of finite array is rectangular i.e. that the
 ;NaN are the same in each image vector
 
-n_col = (size(matrix))(1)     ; Number columns
-n_row = (size(matrix))(2)     ; Number rows
+n_col = (size(matrix))[1]     ; Number columns
+n_row = (size(matrix))[2]     ; Number rows
 
 index = where(finite(matrix) eq 1)
 

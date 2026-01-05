@@ -21,8 +21,8 @@ msk=img
 sx=(size(msk))(1)
 sy=(size(msk))(2)
 
-if not keyword_set(xp) then xp = ((sx-1)/2.)
-if not keyword_set(yp) then yp = ((sy-1)/2.)
+if not keyword_set(xp) then xp = (sx/2.) + 1.
+if not keyword_set(yp) then yp = (sy/2.)
 
 for xx=0, sx-1 do begin
 	for yy=0, sy-1 do begin

@@ -1,7 +1,14 @@
 function RDIKLIP, cube, refcube, k_klip, target=target, checkpoint = checkpoint, anglemask=anglemask, $
 distmask=distmask, posang=posang,scaling=scaling, diam=diam,pixelscale=pixelscale, wl=wl,angsep=angsep,hyper=hyper,$
-obj=obj,nrings=nrings,wr =wr,n_ang =n_ang,annmode_inout=annmode_inout,spot_radius=spot_radius,rho=rho,phi=phi,anglemax=anglemax
+obj=obj,nrings=nrings,wr =wr,n_ang =n_ang,annmode_inout=annmode_inout,spot_radius=spot_radius,rho=rho,phi=phi,anglemax=anglemax,$
+basis=basis, kl_basis_arr=kl_basis_arr,ref_angles=ref_angles,filter=filter,bin=bin
 
+compile_opt IDL2
+newline = string(10B)
+
+filter=filter
+bin=bin
+basis=basis
 ;Function to create PSF subtracted image using KLIP algorithm
 ;The target image is currently the first image in the PSF cube
 ;STRUCTURE - Output from search_zones.pro
@@ -17,13 +24,13 @@ obj=obj,nrings=nrings,wr =wr,n_ang =n_ang,annmode_inout=annmode_inout,spot_radiu
 ;         on the planets, but not the rest of the images
 ; =======================
 
+if not keyword_set(basis) then basis = 0
+;print, 'in rdiklip, size(cube): ', size(cube)
+nimages = (size(cube))[3]
+nrefimages = (size(refcube))[3]
 
- 
 if keyword_set(hyper) and not keyword_set(annmode_inout) then begin
          print, '--[ NUKLIP    ]-- STARTING HYPERKLIP'
-
-nimages = (size(cube))(3)
-nrefimages = (size(refcube))(3)
 
 for ii =0, nimages-1 do cube[where(finite(cube[*,*,ii]) ne 1)]=0. ;remove NaN
 for ii =0, nrefimages-1 do refcube[where(finite(refcube[*,*,ii]) ne 1)]=0. ;remove NaN
@@ -64,8 +71,8 @@ for ii=0, nspots-1 do begin
 
   ; Calculate the planets' position angle consider field rotation
 
- zones = getpatch(cube, rho[ii], phi[ii]- 1.*mean(posang)*!DTOR,wr)  ; Get patch corresponding to the planet ii
-  refzones = getpatch(refcube, rho[ii], phi[ii]- 1.*mean(posang)*!DTOR,wr)  ; Get patch corresponding to the planet ii
+ zones = getpatch(cube, rho[ii], phi[ii]- 1.*mean(posang,/double)*!DTOR,wr)  ; Get patch corresponding to the planet ii
+  refzones = getpatch(refcube, rho[ii], phi[ii]- 1.*mean(posang,/double)*!DTOR,wr)  ; Get patch corresponding to the planet ii
 
 
 ;        zones = getzone(cube, annulus, angles)  ; Returns a nz x npix 2D array with the pixels in the given zone across the cube
@@ -73,29 +80,30 @@ for ii=0, nspots-1 do begin
       target_seg = reform(zones.data[*,target]) 
 
       frames = findgen(nimages)
+      refframes = findgen(nrefimages)
 
-      nottarget  =  where( abs(posang(frames)-posang(target))  ge ANGSEP*abs(arcdist) and  abs(posang(frames)-posang(target))  le anglemax) ; AD
+      nottarget  =  where( abs(ref_angles[refframes]-posang[target])  ge ANGSEP*abs(arcdist) and  abs(ref_angles[refframes]-posang[target])  le anglemax) ; AD
   
       if N_elements(nottarget) lt 4 then begin
-           nottarget =  where(findgen(nimages) ne target)
+           nottarget =  findgen(nrefimages)
           print, ' -[ NUKLIP ]- Less than 4 frames avialable for PCA - Removing angular distance constraint'
         endif
      
-      data_seg = transpose(refzones.data[*,*]  )
+      data_seg = transpose(refzones.data[*,nottarget]  )
  
       dense_target = transpose(target_seg - mean(target_seg))
-;      dense_target = target_seg[where(finite(target_seg) eq 1,/null)] ; Remove NaN   
+      dense_target = target_seg[where(finite(target_seg) eq 1,/null)] ; Remove NaN   
 
-;      dense_target = dense_target - total(dense_target)/n_elements(dense_target)  ; subtract mean
-;      dense_target = transpose(dense_target)  ; 1XN
+      dense_target = dense_target - total(dense_target)/n_elements(dense_target)  ; subtract mean
+      dense_target = transpose(dense_target)  ; 1XN
 
-;      size_target = n_elements(dense_target)
-;      size_mask = n_elements(zones.indices)
+      size_target = n_elements(dense_target)
+      size_mask = n_elements(zones.indices)
 
-;      dense_data = reduce_matrix(data_seg)     ; Condense Matrix (rid NaN)
+      dense_data = reduce_matrix(data_seg)     ; Condense Matrix (rid NaN)
 
       dense_data = data_seg
-      size_data = (size(dense_data))(2)
+      size_data = (size(dense_data))[2]
 
 		
       kl_basis = get_klip_basis(dense_data, k_klip) ; CREATE BASIS!
@@ -118,52 +126,24 @@ endif
 
 if  keyword_set(annmode_inout) then begin
 
-print, '--[ NUKLIP    ]-- STARTING ANNULAR KLIP'
-
-;seperate structure elements
-;ringseg = structure.ringseg
-;mask_index = structure.mask_index
-;structure = 0.0  ; free memory
-
-
-;store number of images, rings, and angular segments in ringseg
-;nimages = (size(ringseg))(1)
-;nrings = (size(ringseg))(2)
-;n_ang = (size(ringseg))(3)
-;data = (size(ringseg))(4)
-
-nimages = (size(cube))(3)
-nrefimages = (size(refcube))(3)
+print, newline, '--[ NUKLIP    ]-- STARTING ANNULAR KLIP'
 
 ;Set dimensions of single frame
-n_cols = (size(cube))(1)
+n_cols = (size(cube))[1]
 n_rows = n_cols
 
 final_arr = fltarr(n_cols,n_rows)  ; final array same size as sub array
 
 final_arr[*] = !values.f_nan
 
-;full_lib = fltarr(nimages-1,nrings,n_ang,data)  ; Define array for psf lib
-
-;for aa = 0, nimages-2 do begin
-;   full_lib[aa,*,*,*] = ringseg[aa+1,*,*,*]  ; Remove target image from psf lib
-;endfor
-
-;  full_lib[0:nimages-2,*,*,*] = ringseg[1:nimages-1,*,*,*]  ; Replaced the above loop with this single line
-
-;store number of images in psf lib
-;nimages = (size(full_lib))(1)
-
 progress_counter = 0.0          ; initialize progress counter
 total_elements = nrings*n_ang   ; also used for progress update
 
-;Build final image segment by segment:
-;for ii=0, nrings-1 do begin
 
-      ; What pos angle difference translates to 1.5 FWHM in this annulus/ring?
-      wl=wl*1E-6
+;; What pos angle difference translates to 1.5 FWHM in this annulus/ring?
 
-   arcdist = (asin( (1.22 * wl /diam/!DTOR *3600./pixelscale ) / ((total(annmode_inout)/2.) )) )/!DTOR ; Gives the minimum posang difference
+ arcdist = (asin( (1.22 * wl*1E-6 /diam/!DTOR *3600./pixelscale ) / ((total(annmode_inout)/2.) )) )/!DTOR ; Gives the minimum posang difference
+; print, arcdist, wl, diam, pixelscale, (total(annmode_inout)/2.)
                                 ; required to have a 1.0 FWHM arc
                                 ; difference in H-band with a
                                 ; diffraction limited 8m telescope at
@@ -172,8 +152,12 @@ total_elements = nrings*n_ang   ; also used for progress update
                                 
 
                                 ; AD March 3, 2015
-;  print, 'Ring #',ii,' with min angular distance of :',arcdist
+ ; print, 'Ring #',ii,' with min angular distance of :',arcdist
+	if basis eq 1 then kl_basis_arr = list()
+	;print, 'starting loop over n_ang...'
+	;print, newline
    for jj=0, n_ang-1 do begin
+   ;print, 'start of loop jj: ', jj
 
 
 ;first, we get the data from our target segment (the one we will
@@ -193,89 +177,94 @@ total_elements = nrings*n_ang   ; also used for progress update
 
       target_seg = reform(zones.data[*,target]) 
 
-;      nottarget =  where(findgen(nimages) ne target) ; AD
+      ;nottarget =  where(findgen(nimages) ne target) ; AD
                                 ; Changing this to exclude frames with
                                 ; relative pos angles < 1.5 FWHM at
                                 ; the given distance
       frames = findgen(nimages)
+      refframes = findgen(nrefimages)
       
       
        FWHM=1.22 *wl*(10.^(-6.))/diam / !DTOR *3600./ pixelscale
  	 ; = rho[ii]*wavedist
       ;nottarget  =  findgen(nrefimages) ; AD
   	  ;nottarget  =  where( abs(scaling(frames)-scaling(target)) ge ANGSEP*FWHM/(N_Cols/2.) ); KW - SDI
-		print, angsep,arcdist, anglemax
+		print, newline, 'angsep, arcdist, anglemax: ', angsep, arcdist, anglemax, newline
+		
 		;print, posang
-      nottarget  =  where( abs(posang[frames]-posang[target])  ge ANGSEP*abs(arcdist) and abs(posang[frames]-posang[target])  le anglemax ) ; AD
-        if jj eq 0 then print, 'Frames meeting separation criteria:',(size(nottarget))(1)
+		angdiff = abs(ref_angles[refframes]-posang[target])
+      nottarget  =  where( angdiff  ge ANGSEP*abs(arcdist) and angdiff  le anglemax ) ; AD
+        if jj eq 0 then print, 'Frames meeting separation criteria:',(size(nottarget))[1]
 
   
       if N_elements(nottarget) lt 4 then begin
-           nottarget =  where(findgen(nimages) ne target)
+           nottarget =  findgen(nimages)
           print, ' -[ NUKLIP ]- Less than 4 frames avialable for PCA - Removing angular distance constraint'
         endif
         
         
-
-      data_seg = transpose(refzones.data[*,nottarget]  )
+      data_seg = transpose(refzones.data[*,nottarget])
  
       dense_target = target_seg[where(finite(target_seg) eq 1,/null)] ; Remove NaN   
 
-      if dense_target eq !NULL then begin
+    ;  if dense_target eq !NULL then begin
          
-         print, 'ERROR: EMPTY SEARCH ZONE'
-         print,'MAKE SURE ALL SEARCH ZONES CONTAIN >1 PIXELS'
+     ;    print, 'ERROR: EMPTY SEARCH ZONE'
+      ;   print,'MAKE SURE ALL SEARCH ZONES CONTAIN >1 PIXELS'
 
-      endif
+      ;endif
 
       dense_target = dense_target - total(dense_target)/n_elements(dense_target)  ; subtract mean
       dense_target = transpose(dense_target)  ; 1XN
-;      index = where(finite(mask_index[ii,jj,*]) eq 1,/null)  ; get segment index
+      ;index = where(finite(mask_index[ii,jj,*]) eq 1,/null)  ; get segment index
 
-      size_target = n_elements(dense_target)
-      size_mask = n_elements(zones.indices)
-      if size_target ne size_mask then print, 'MASK NOT SAME SIZE AS DATA'
-
-
-;next, we will create our KL basis
-
-     
-      ;store the segments of interest
-      ;data_seg = full_lib[*,ii,jj,*]   ; create psf lib for segment
+     ; size_target = n_elements(dense_target)
+     ; size_mask = n_elements(zones.indices)
+     ; if size_target ne size_mask then print, 'MASK NOT SAME SIZE AS DATA'
 
       dense_data = reduce_matrix(data_seg)     ; Condense Matrix (rid NaN)
 
-      size_data = (size(dense_data))(2)
+      size_data = (size(dense_data))[2]
       
       ;If the segment contains only a single pixel then dense_data is 1d matrix
-      if size_target eq 1 then begin
+     ; if size_target eq 1 then begin
 
-         print, '(WARNING!) Some Search Zones Contain Only 1 Pixel...'
+     ;    print, '(WARNING!) Some Search Zones Contain Only 1 Pixel...'
          
-         size_data = 1
+      ;   size_data = 1
 
-      endif
+      ;endif
 
-      if size_target ne size_data then print, 'TARGET SEG NOT SAME SIZE AS DATA SEG'
+      ;if size_target ne size_data then print, 'TARGET SEG NOT SAME SIZE AS DATA SEG'
 
-      kl_basis = get_klip_basis(dense_data, k_klip) ; CREATE BASIS!
+		if basis eq 1 then begin
+			print, 'creating KLIP basis!'
+			new_basis = get_klip_basis(dense_data, (size(nottarget))[1]); use every good reference frame!
+			kl_basis_arr.Add, new_basis
+			print, 'added KLIP basis for ang ', string(jj)
+			
+			save, kl_basis_arr, filename='~/Desktop/'+obj+'_filt_'+strcompress(string(filter),/r)+'_bin_'+strcompress(string(bin),/r)+'RDI_basis.sav'
+			
+		endif else kl_basis_arr = kl_basis_arr
 
 ;last, we will project our target image onto our KL basis
 
-
-      synthetic_1d = dense_target # matrix_multiply(kl_basis,kl_basis,/atranspose)  ; create psf reconstruction
+			kklip_basis_jj = kl_basis_arr[jj]
+			kklip_basis_jj = kklip_basis_jj[0:min([k_klip-1, (size(kklip_basis_jj))[3]-1]),*]
+      		synthetic_1d = dense_target # matrix_multiply(kklip_basis_jj,kklip_basis_jj,/atranspose)  ; create psf reconstruction
       
-      synthetic_1d = dense_target - synthetic_1d ; subtract psf reconstruction     
+      		synthetic_1d = dense_target - synthetic_1d ; subtract psf reconstruction     
       
-      final_arr[zones.indices] = synthetic_1d ; Build Final Image  -- AD: Replaced loop with single command
+      		final_arr[zones.indices] = synthetic_1d ; Build Final Image  -- AD: Replaced loop with single command
 
-      progress_counter = progress_counter + 1 ; update progress
+      		progress_counter = progress_counter + 1 ; update progress
 
-   endfor
+
+   endfor; for angles (annular segments)
    
 ;endfor
 
-endif;===================
+endif;===================; annmode RDI
 
 if not keyword_set(hyper) and not keyword_set(annmode_inout) then begin
 
@@ -293,11 +282,8 @@ print, '--[ NUKLIP    ]-- STARTING REGULAR KLIP'
 ;n_ang = (size(ringseg))(3)
 ;data = (size(ringseg))(4)
 
-nimages = (size(cube))(3)
-nrefimages = (size(refcube))(3)
-
 ;Set dimensions of single frame
-n_cols = (size(cube))(1)
+n_cols = (size(cube))[1]
 n_rows = n_cols
 
 final_arr = fltarr(n_cols,n_rows)  ; final array same size as sub array
@@ -333,7 +319,7 @@ for ii=0, nrings-1 do begin
  
                                 ; AD March 3, 2015
 ;  print, 'Ring #',ii,' with min angular distance of :',arcdist
-   for jj=0, n_ang-1 do begin
+for jj=0, n_ang-1 do begin
 
 
 ;first, we get the data from our target segment (the one we will
@@ -364,16 +350,16 @@ for ii=0, nrings-1 do begin
  	 ; = rho[ii]*wavedist
       ;nottarget  =  findgen(nrefimages) ; AD
   	  ;nottarget  =  where( abs(scaling(frames)-scaling(target)) ge ANGSEP*FWHM/(N_Cols/2.) ); KW - SDI
-  if jj eq 0 and ii eq 0 then print, 'Frames meeting separation criteria:',(size(nottarget))(1)
+  if jj eq 0 and ii eq 0 then print, 'Frames meeting separation criteria:',(size(nottarget))[1]
 
-      nottarget  =  where( abs(posang(frames)-posang(target))  ge ANGSEP*abs(arcdist) and abs(posang(frames)-posang(target))  le anglemax) ; AD
+      nottarget  =  where( abs(ref_angles[frames]-posang[target])  ge ANGSEP*abs(arcdist) and abs(ref_angles[frames]-posang[target])  le anglemax) ; AD
   
       if N_elements(nottarget) lt 4 then begin
            nottarget =  where(findgen(nimages) ne target)
           print, ' -[ NUKLIP ]- Less than 4 frames avialable for PCA - Removing angular distance constraint'
         endif
 
-      data_seg = transpose(refzones.data[*,*]  )
+      data_seg = transpose(refzones.data[*,nottarget])
  
       dense_target = target_seg[where(finite(target_seg) eq 1,/null)] ; Remove NaN   
 
@@ -401,7 +387,7 @@ for ii=0, nrings-1 do begin
 
       dense_data = reduce_matrix(data_seg)     ; Condense Matrix (rid NaN)
 
-      size_data = (size(dense_data))(2)
+      size_data = (size(dense_data))[2]
       
       ;If the segment contains only a single pixel then dense_data is 1d matrix
       if size_target eq 1 then begin

@@ -23,14 +23,14 @@ minvalue=minvalue,maxvalue=maxvalue,no_2d=no_2d,no_smooth=no_smooth,ct=ct,filter
 do_cen_filter=do_cen_filter
 
 ; Trying this out...
-SET_PLOT, 'Z'
+;SET_PLOT, 'Z'
 
 ;tunable parameters
 
 if not keyword_set(correction_factor) then correction_factor=1.0
 if not keyword_set(sigma) then sigma=5. 
 ;if not keyword_set(splatescale) then platescale=1.
-if not keyword_set(FWHM) then FWHM=4.;(wavelength)/(diameter) * 206265. / platescale
+if not keyword_set(FWHM) then FWHM=14.;(wavelength)/(diameter) * 206265. / platescale
 aper_rad=FWHM/2.
 if not keyword_set(clip_level) then clip_level=0.5
 
@@ -105,7 +105,7 @@ if not keyword_set(outrad) then outrad=(xsize/2.) - 4.*fix(FWHM)
 
 	;window,0,xs=xsize,ys=ysize
 	;w=window(dimensions=[xsize,ysize])
-	loadct,36,/silent
+;	loadct,36,/silent
 
 		frame[where(finite(frame) eq 0)]=0.
 
@@ -148,15 +148,16 @@ sources_contrast=[]
 xlast=0 & ylast=0 & flipswitch=0 & stopswitch=0
 
 for rr=inrad,outrad do begin
-
+	print, 'float( round( (2.*!PI*float(rr))/FWHM )):', float( round( (2.*!PI*float(rr))/FWHM ))
 	;start at north, progress by each pixel (to 2PiR) and calculate flux in each aperture
-	ntheta=(2.*!PI*float(rr))/(fix(FWHM)) ;about one angular bin per resolution element
+	ntheta=max([1, float( fix( (2.*!PI*float(rr))/FWHM ))]) ;about one angular bin per resolution element
 
 	;print, '--- Searching for sources at radius (px): ',rr
 	;print, '--- Apertures at this radius: ',ntheta
 
 	for itheta=0.,ntheta do begin
 		theta=(float(itheta)/float(ntheta))*2.*!PI;+(!PI/31.)
+
 		xtest=float(xsize)/2.+(float(rr)*cos(theta)) & ytest=float(ysize)/2.+(float(rr)*sin(theta))
 		;print, size(frame)
 		aper, frame, xtest, ytest, flux,fluxerr,sky,skyerr,1.75,aper_rad,sky_rad,[-99E99,99E99],/silent,/flux,SETSKYVAL=0,/exact
@@ -591,11 +592,11 @@ plotcolor='Snow'
 
 ;if do_phot then disp_frame=disp_frame/ref_flux
 
-cgps_open,location+name+ '_original.ps'
+;cgps_open,location+name+ '_original.ps'
 
 
-   cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
-	cgDisplay,xsize,ysize,/device
+ ;  cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
+;	cgDisplay,xsize,ysize,/device
 
  ;  image = cgdemodata(18) cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
 
@@ -608,44 +609,44 @@ if do_phot then tickinterval=maxcon/5. else tickinterval=(maxvalue-minvalue)/5.
 
 if total(range) eq 0 then range=[0,max(disp_frame,/nan)]
 
-cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
+;cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
 
 ;print, range
 !p.psym=0
 !p.linestyle=0
 
- cgcolorbar,range=range,annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title=cbtitle,tickinterval=sigfig(tickinterval,2)
+ ;cgcolorbar,range=range,annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title=cbtitle,tickinterval=sigfig(tickinterval,2)
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
 
-cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,color=plotcolor
 
-cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
 
-if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
+;if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
 
 ;end annotations
 
-cgps_close,/png
+;cgps_close,/png
 
-cgcleanup
+;cgcleanup
 
 if do_2d then begin
 
-cgps_open,location+name+ '_SNR_map.ps'
+;cgps_open,location+name+ '_SNR_map.ps'
 
 
-   cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
-	cgDisplay,xsize,ysize,/device
+ ;  cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
+;	cgDisplay,xsize,ysize,/device
 
  ;  image = cgdemodata(18)
-   cgImage,result,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=-5.,maxvalue=10.,mean=meanvalue;,position=[0,0,1,1]
+ ;  cgImage,result,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=-5.,maxvalue=10.,mean=meanvalue;,position=[0,0,1,1]
 
 
 
@@ -656,48 +657,48 @@ cgps_open,location+name+ '_SNR_map.ps'
 
 !p.psym=0
 !p.linestyle=0
-  cgcolorbar,range=[-5,10],annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title='SNR',tickinterval=3.
+;  cgcolorbar,range=[-5,10],annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title='SNR',tickinterval=3.
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
 
-cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,c;;olor=plotcolor
 
-cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
 
-if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
+;if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
 
 ;end annotations
 
-cgps_close,/png
+;cgps_close,/png
 
 
 
 endif ;2d if
 
-cgps_open,location+name+ string(filter) +  '_source_map.ps'
+;cgps_open,location+name+ string(filter) +  '_source_map.ps'
 
 
-   cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
-	cgDisplay,xsize,ysize,/device
+ ;  cgLoadCT, 1;, NColors=100,BOTTOM=100;,BOTTOM=100
+;	cgDisplay,xsize,ysize,/device
 
  ;  image = cgdemodata(18)
   ; cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
 
 
-  if do_2d then cgImage,result,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=-5,maxvalue=10,mean=meanvalue;,position=[0,0,1,1] else
+ ; if do_2d then cgImage,result,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=-5,maxvalue=10,mean=meanvalue;,position=[0,0,1,1] else
 
-if not do_2d then   cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
+;if not do_2d then   cgImage,disp_frame,stretch=stretch,clip=clip_level,xrange=[0,xsize],yrange=[0,ysize],/keep_aspect_ratio,minvalue=minvalue,maxvalue=maxvalue,mean=meanvalue;,position=[0,0,1,1]
 
 
 ;begin annotations
 
-if do_2d then cgcolorbar,range=[-5,10],annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title='SNR',tickinterval=3.
+;if do_2d then cgcolorbar,range=[-5,10],annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title='SNR',tickinterval=3.
 
 
 if do_phot then range=[0,maxcon] else range=[minvalue,maxvalue]
@@ -710,21 +711,21 @@ if do_phot then tickinterval=maxcon/5. else tickinterval=(maxvalue-minvalue)/5.
 !p.linestyle=0
 
 
-if not do_2d then  cgcolorbar,range=range,annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title=cbtitle,tickinterval=sigfig(tickinterval,2)
+;if not do_2d then  cgcolorbar,range=range,annotatecolor='white',position=[0.03,0.07,0.57,0.085],charpercent=0.6,title=cbtitle,tickinterval=sigfig(tickinterval,2)
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.05*xsize],[0.17*ysize],/continue,color='white'
 
 
-cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
-cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
+;cgplots,[xsize-0.05*xsize],[0.05*ysize],color='white
+;cgplots,[xsize-0.17*xsize],[0.05*ysize],/continue,color='white'
 
-cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.2*xsize,ysize*0.04,'E',charthick=3,charsize=1.2,color=plotcolor
 
-cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
+;cgtext,xsize-0.06*xsize,ysize*0.18,'N',charthick=3,charsize=1.2,color=plotcolor
 
-if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
+;if keyword_set(platescale) then cgtext,xsize-0.13*xsize,ysize*0.02,string(sigfig(0.12*xsize*platescale,2))+'"',charthick=3,charsize=1.2,color=plotcolor
 
 ;end annotations
 
@@ -735,22 +736,22 @@ if n_elements(sources_y) eq 1 then if sources_y eq -1 then sources_y=[]
 if n_elements(sources_contrast) eq 1 then if sources_contrast eq -1 then sources_contrast=[]
 
 
-for jj=0, n_elements(sources_x)-1 do begin
+;for jj=0, n_elements(sources_x)-1 do begin
 
-			cgloadct
-			PlotSym, 0, 2./(float(xsize)/1024.),thick=3
-			!p.psym=8
+;			cgloadct
+;			PlotSym, 0, 2./(float(xsize)/1024.),thick=3
+;			!p.psym=8
 
-			if sources_x[jj] ne 0. and sources_y[jj] ne 0. then begin
+;			if sources_x[jj] ne 0. and sources_y[jj] ne 0. then begin
 
-			cgplots,sources_x[jj]+0.5,sources_y[jj]+0.5,COLOR=plotcolor;,/device
-			cgplots,sources_x[jj]+0.5,sources_y[jj]+0.5,/continue,COLOR=plotcolor;,/device
+;			cgplots,sources_x[jj]+0.5,sources_y[jj]+0.5,COLOR=plotcolor;,/device
+;			cgplots,sources_x[jj]+0.5,sources_y[jj]+0.5,/continue,COLOR=plotcolor;,/device
 
 
-			cgtext,sources_x[jj]-35,sources_y[jj]+15,String(jj+1),charthick=3,charsize=1.2,color=plotcolor
-			endif
+;			cgtext,sources_x[jj]-35,sources_y[jj]+15,String(jj+1),charthick=3,charsize=1.2,color=plotcolor
+;			endif
 
-endfor
+;endfor
 
 
 
@@ -819,8 +820,8 @@ save,filename=location+name+ '_sources.sav',sources_x,sources_y,sources_sigma,so
 
 ;tvlct,255,255,255,0
 ;!p.color=0
-cgps_close,/png
-cgps_open,location+name+ '_radial_sensitivity.ps',/landscape
+;cgps_close,/png
+;cgps_open,location+name+ '_radial_sensitivity.ps',/landscape
 	;window,1,xs=xsize,ys=ysize
 !p.psym=0
 
@@ -834,14 +835,14 @@ if keyword_set(platescale) then xrange=[0,(inrad*platescale)+(n_elements(sensiti
 
 if do_phot then yrange=[1E-7,1E-0] else yrange=[min(sensitivity,/nan)/2.,1.5*max(sensitivity,/nan)]
 if fwhm gt 5 then yrange=[1E-5,1E-2]
-if do_phot then ytitle=textoidl(string(sigfig(5.0,2))+'-\sigma Contrast') else ytitle = textoidl(string(sigfig(sigma,2))+'-\sigma Sensitivity (ADU/Beam)')
+;if do_phot then ytitle=textoidl(string(sigfig(5.0,2))+'-\sigma Contrast') else ytitle = textoidl(string(sigfig(sigma,2))+'-\sigma Sensitivity (ADU/Beam)')
 
 if not keyword_set(platescale) then platescale=1.
 
 
-plot, (inrad*platescale)+(findgen(n_elements(sensitivity))*platescale),sensitivity,charsize=2,ytitle=ytitle,xtitle=xtitle,/ylog,xrange=xrange,yrange=yrange
+;plot, (inrad*platescale)+(findgen(n_elements(sensitivity))*platescale),sensitivity,charsize=2,ytitle=ytitle,xtitle=xtitle,/ylog,xrange=xrange,yrange=yrange
 !p.psym=4
-if sources_contrast ne !NULL then oplot, sqrt( (sources_x-(xsize/2.))^2. + (sources_y-(ysize/2.))^2. )*platescale, sources_contrast
+;if sources_contrast ne !NULL then oplot, sqrt( (sources_x-(xsize/2.))^2. + (sources_y-(ysize/2.))^2. )*platescale, sources_contrast
 
 
 if sources ne !NULL then writefits,location+name+ '_sources.fits',sources
@@ -867,11 +868,11 @@ true_contrast=(3.0E-5)	;known contrast of the majority of sources if the field o
 ;writefits,location+name+'_radial_throughput_correction.fits',correction
 ;endif
 
-cgps_close,/png
+;cgps_close,/png
 
 
 if platescale lt 1 then begin
-cgps_open,location+name+ '_radial_sensitivity_2.0_arcsec.ps',/landscape
+;cgps_open,location+name+ '_radial_sensitivity_2.0_arcsec.ps',/landscape
 	;window,1,xs=xsize,ys=ysize
 !p.psym=0
 
@@ -883,17 +884,17 @@ if keyword_set(platescale) then xtitle='Radius (Arcsec)' else xtitle= 'Radius (p
 xrange=[0,2]
 
 if do_phot then yrange=[1E-7,1E-0] else yrange=[min(sensitivity,/nan)/2.,1.5*max(sensitivity,/nan)]
-if do_phot then ytitle=textoidl(string(sigfig(5.0,2))+'-\sigma Contrast') else ytitle = textoidl(string(sigfig(sigma,2))+'-\sigma Sensitivity (ADU/Beam)')
+;if do_phot then ytitle=textoidl(string(sigfig(5.0,2))+'-\sigma Contrast') else ytitle = textoidl(string(sigfig(sigma,2))+'-\sigma Sensitivity (ADU/Beam)')
 
 if not keyword_set(platescale) then platescale=1.
 
 
-plot, (inrad*platescale)+(findgen(n_elements(sensitivity))*platescale),sensitivity,charsize=2,ytitle=ytitle,xtitle=xtitle,/ylog,xrange=xrange,yrange=yrange
+;plot, (inrad*platescale)+(findgen(n_elements(sensitivity))*platescale),sensitivity,charsize=2,ytitle=ytitle,xtitle=xtitle,/ylog,xrange=xrange,yrange=yrange
 !p.psym=4
-if sources_contrast ne !NULL then oplot, sqrt( (sources_x-(xsize/2.))^2. + (sources_y-(ysize/2.))^2. )*platescale, sources_contrast
+;if sources_contrast ne !NULL then oplot, sqrt( (sources_x-(xsize/2.))^2. + (sources_y-(ysize/2.))^2. )*platescale, sources_contrast
 
 
-cgps_close,/png;,width=1500
+;cgps_close,/png;,width=1500
 endif
 
 ;endif ;sources ne null if

@@ -13,7 +13,7 @@ if keyword_set(planet_r) and keyword_set(planet_theta) then begin
 	print, 'Planet Radii:', planet_r
 	print, 'Planet Thetas:', planet_theta
 endif else begin
-	if keyword_set(planet_x) and keyword_set(planet_y) then begin
+	if keyword_set(planet_x) then begin
 		print, 'Planet x:', planet_x
 		print, 'Planet y:', planet_y
 	endif else begin
@@ -33,13 +33,13 @@ if nod eq 'total' then begin
 			
 	endfor; runs for
 endif else begin
+	if nod eq 'dx_only' then for runs=3,4 do begin
 
-	runs = fix(nod)
-	do_inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
-			pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
-			planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,$
-			truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, runs=runs
-			
+		do_inject_planets, obj_name, cube_folder, n_planets, planet_contrast, pxscale_sx,$
+				pxscale_dx, ct, do_cen_filter, planet_r=planet_r, planet_theta=planet_theta,$
+				planet_x=planet_x, planet_y=planet_y, use_gauss=use_gauss, silent=silent,$
+				truenorth_sx=truenorth_sx, truenorth_dx=truenorth_dx, runs=runs
+	endfor
 endelse
 
 end; inject_planets procedure end

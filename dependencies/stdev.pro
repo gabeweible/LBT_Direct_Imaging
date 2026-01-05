@@ -4,6 +4,8 @@
 ;       rights reserved. Unauthorized reproduction is prohibited.
 
 Function STDEV, Array, Mean
+
+compile_opt IDL2
 ;
 ;+
 ; NAME:

@@ -12,21 +12,34 @@ function getzone, cube, annulus, angles
  sc = size(cube)
 
  mask  = fltarr(sc[1],sc[2])
+ 
+ ; get the x- and y-dimensions of the image (number of px, not max. px index)
+mask_sz_x = sc[1]
+mask_sz_y = sc[2]
 
- dist_circle,  mask, [ sc[1],sc[2]], sc[1]/2.-1, sc[2]/2.-1
+; star center
+x_center = mask_sz_x / 2.
+y_center = mask_sz_y / 2.
 
-; xx = replicate(findgen(sc[1]),sc[2])-sc[1]/2.-1
-; yy = transpose(replicate(findgen(sc[2]),sc[1]))-sc[2]/2.-1
+inrad = annulus[0] & outrad = annulus[1]
+
+; Loop through all pixels in the image
+for x = 0, mask_sz_x - 1 do begin
+	for y = 0, mask_sz_y - 1 do begin
+	
+		; distance of pixel at (x, y) from center of the image
+		distance = sqrt( ((x-x_center)^2.) + ((y-y_center)^2.) )
+	
+		;Pythagorean theorem baby! (everything within the radius of pixels is turned into NaN)
+		if (distance lt inrad) or (distance) gt outrad then mask[x,y] = !values.f_nan
+		
+	endfor; y-pixel loop
+endfor; x-pixel loop
  
  ang = mask
  ang = angmask(mask, sc[1]/2.-1, sc[2]/2.-1)
 
-; good =mask
-; good[*] = !values.f_nan
- good = where(ang ge angles[0]*!DTOR and ang le angles[1]*!DTOR and mask ge annulus[0] and mask le annulus[1])
-; data = fltarr(sc[3],nump)
-
-; writefits, 'masktest.fits', good
+ good = where(ang ge angles[0]*!DTOR and ang le angles[1]*!DTOR and finite(mask) eq 1)
 
  indices=good
  data = fltarr(n_elements(good), sc[3])

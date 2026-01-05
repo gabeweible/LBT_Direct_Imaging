@@ -280,7 +280,7 @@ if not keyword_set(pmin) then begin
 		m=max(out,pos)
 		y=shift(out,-(pos-range))
 		y=y[0:2*range]
-		coeff=poly_fit(indgen(range*2+1),y,degree)
+		coeff=poly_fit(indgen(range*2+1),y,degree,/double)
 		pmax=_newton(range,degree,coeff)
 		pmax=pmax+(pos-range)
 		if pmax gt (size(out))[1]/2 then pmax=pmax-(size(out))[1]
@@ -315,7 +315,7 @@ endif else begin
 		m=min(out,pos)
 		y=shift(out,-(pos-range))
 		y=y[0:2*range]
-		coeff=poly_fit(indgen(range*2+1),y,degree)
+		coeff=poly_fit(indgen(range*2+1),y,degree,/double)
 		pmin=_newton(range,degree,coeff)
 		pmin=pmin+(pos-range)
 		if pmin gt (size(out))[1]/2 then pmin=pmin-(size(out))[1]

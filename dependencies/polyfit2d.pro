@@ -54,6 +54,7 @@
 ;		Fletcher-Reeves (Polak-Ribiere) minimization
 ;		adapted from NUMERICAL RECIPIES
 ;
+compile_opt idl2
 
 		FUNCTION FRPR_FUNC,P
 
@@ -64,8 +65,8 @@
 		;
 		;this function f(P) returns the function-value for variable vector P
 		;	
-		x=p(0)
-		y=p(1)
+		x=p[0]
+		y=p[1]
 		f=0.D
 		FOR ix = 0,degree DO $
 			FOR iy = 0,degree DO $
@@ -84,8 +85,8 @@
 		;this procedure return the vector gradient DF evaluated at the input
 		;point P
 
-		x=p(0)
-		y=p(1)
+		x=p[0]
+		y=p[1]
 
 		fx = 0.D       ;  evaluates fx
 		FOR ix = 1,degree DO $
@@ -99,8 +100,8 @@
 
 
 		df=dblarr(2)
-		df(0)=fx
-		df(1)=fy
+		df[0]=fx
+		df[1]=fy
 		return
 		end
 
@@ -439,9 +440,9 @@ FUNCTION POLYFIT2D, surface,degree,fit_surface,min=min,max=max,fret=fret
 ;				sizes of dimensions of surface
 ;
 	on_error,2                      ;Return to caller if an error occurs
-	sizes = SIZE (surface)
-	size_x = sizes (1)
-	size_y = sizes (2)
+	sizes = SIZE(surface)
+	size_x = sizes[1]
+	size_y = sizes[2]
 ;
 ;				initialize
 ;
@@ -478,8 +479,8 @@ FUNCTION POLYFIT2D, surface,degree,fit_surface,min=min,max=max,fret=fret
 	endelse
 	if n_elements(max) eq 1 then c=-c
 
-	x=double(pos mod (size(fit))(1))
-	y=double(pos/(size(fit))(1))
+	x=double(pos mod (size(fit))[1])
+	y=double(pos/(size(fit))[1])
 
 	iter=0
 	fret=0.
@@ -488,8 +489,8 @@ FUNCTION POLYFIT2D, surface,degree,fit_surface,min=min,max=max,fret=fret
 ;	evaluating minimum-position
 ;
 	frprmn,p,2,1.d-10,iter,fret
-	x=p(0)
-	y=p(1)
+	x=p[0]
+	y=p[1]
 	if n_elements(max) eq 1 then fret=-fret
 
 ;				return coordinates 

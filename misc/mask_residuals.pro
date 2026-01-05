@@ -1,4 +1,4 @@
-pro mask_residuals, image, radius, output_file
+pro mask_residuals, image, radius, output_file, outrad=outrad
 ;+
 ; NAME:
 ;       MASK_RESIDUALS
@@ -11,9 +11,9 @@ pro mask_residuals, image, radius, output_file
 ;       MASK_RESIDUALS, image, radius, output_file
 
 ; INPUTS:
-;       image = a single 2D FITS image
+;       image = a single 2D FITS image (filename)
 ; 
-;       radius = radius in pixels to mask in a circle
+;       radius = radius in pixels to mask in a circle (15 good for HII 1348B)
 
 ;       output_file = string output FITS to write the masked image to
 ;       
@@ -48,12 +48,21 @@ image = readfits(image)
 image_sz_x = (size(image))[1]
 image_sz_y = (size(image))[2]
 
+; star center
+x_center = image_sz_x / 2.
+y_center = image_sz_y / 2.
+
 ; Loop through all pixels in the image
 for x = 0, image_sz_x - 1 do begin
 	for y = 0, image_sz_y - 1 do begin
 	
-		;Pythagorean theorem baby! (everything within the radius of pixels is divided into oblivion)
-		if sqrt( ((x-(image_sz_x-1)/2)^2.) + ((y-(image_sz_y-1)/2)^2.) ) lt radius then image[x,y] *= 0.00000000000000000000000001
+		;Pythagorean theorem baby! (everything within the radius of pixels is turned into NaN)
+		if sqrt( ((x-x_center)^2.) + ((y-y_center)^2.) ) le radius then image[x,y] = !values.f_nan
+		
+		if keyword_set(outrad) then begin
+		;Pythagorean theorem baby! (everything within the radius of pixels is turned into NaN)
+		if sqrt( ((x-x_center)^2.) + ((y-y_center)^2.) ) ge outrad then image[x,y] = !values.f_nan
+		endif
 		
 	endfor; y-pixel loop
 endfor; x-pixel loop

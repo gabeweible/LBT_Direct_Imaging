@@ -3,6 +3,7 @@ distmask=distmask, posang=posang, diam=diam,pixelscale=pixelscale, wl=wl,angsep=
 obj=obj,nrings=nrings,wr =wr,n_ang =n_ang, num=num, anglemax=anglemax,annmode_inout=annmode_inout,spot_radius=spot_radius,rho=rho,phi=phi
 
 newline = string(10B)
+compile_opt IDL2
 
 ;Function to create PSF subtracted image using KLIP algorithm
 ;The target image is currently the first image in the PSF cube
@@ -215,7 +216,7 @@ total_elements = nrings*n_ang   ; also used for progress update
 
       ; What pos angle difference translates to 1.5 FWHM in this annulus/ring?
 
-   arcdist = (asin((1.22 * (wl * (10.^(-6.))  )/diam/!DTOR *3600./pixelscale ) / (annmode_inout[0]+(abs(annmode_inout[1]-annmode_inout[0] )/2.)) ))/!DTOR ; Gives the minimum posang difference
+   ;arcdist = (asin((1.22 * (wl * (10.^(-6.))  )/diam/!DTOR *3600./pixelscale ) / (annmode_inout[0]+(abs(annmode_inout[1]-annmode_inout[0] )/2.)) ))/!DTOR ; Gives the minimum posang difference
                                 ; required to have a 1.5 FWHM arc
                                 ; difference in H-band with a
                                 ; diffraction limited 8m telescope at
@@ -325,6 +326,7 @@ endif
 if not keyword_set(hyper) and not keyword_set(annmode_inout) then begin
 
 print, '--[ ADIKLIP    ]-- STARTING REGULAR KLIP'
+print, '--[ ADIKLIP    ]-- With k_klip = ', k_klip
 
 if keyword_set(trial) then print, 'Trial:', trial
 ;seperate structure elements
