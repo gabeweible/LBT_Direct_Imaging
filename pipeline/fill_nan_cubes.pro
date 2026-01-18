@@ -129,6 +129,7 @@ for i = 0, n_process_cubes-1 do begin
     total_nans_filled = 0L
     
     ; Process each frame
+    seed = 12345L
     for frame_idx = 0, total_frames-1 do begin
         ; Extract frame
         frame_ii = obj_cube[*,*,frame_idx]
@@ -144,11 +145,12 @@ for i = 0, n_process_cubes-1 do begin
                 finite_values = frame_ii[finite_mask]
                 
                 ; Calculate frame median
-                frame_median = median(finite_values, /even)
+                frame_median = median(double(finite_values), /even, /double)
                 
                 ; Calculate robust noise estimate using MAD
-                mad_val = median(abs(finite_values - frame_median), /even)
-                noise_sigma = 1.4826 * mad_val
+                mad_val = float(median(abs(double(finite_values) - frame_median), /even, /double))
+                noise_sigma = 2 * 1.4826 * mad_val
+                frame_median = float(frame_median)
                 
                 ; Generate Gaussian noise for NaN pixels
                 gaussian_noise = randomn(seed, n_nans) * noise_sigma
@@ -191,7 +193,7 @@ for i = 0, n_process_cubes-1 do begin
         total_pixels_processed += (x_dim * y_dim)
         
         ; Progress reporting
-        if (frame_idx mod 100) eq 0 then begin
+        if (frame_idx mod 41) eq 0 then begin
             percent_complete = 100.0 * frame_idx / (total_frames-1)
             print, '    Progress: ', string(percent_complete, format='(F5.1)'), '% (frame ', $
                    frame_idx, '/', total_frames-1, ')'

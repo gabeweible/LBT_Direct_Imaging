@@ -25,7 +25,7 @@ newline = string(10B)
 
 ; mask values less than this threshold before local-median replacement
 ; (for very stubborn pixels...)
-if not keyword_set(frame_min) then frame_min = -8.5
+if not keyword_set(frame_min) then frame_min = -12
 
 ; Set defaults
 if not keyword_set(cube_folder) then cube_folder = output_folder
@@ -158,11 +158,15 @@ for i = 0, n_process_cubes-1 do begin
                 good_values = original_frame[good_pixels]
                 
                 ; Calculate robust noise estimate: 1.4826 * MAD
-                median_val = median(good_values, /even)
-                mad_val = median(abs(good_values - median_val), /even)
-                noise_sigma = 1.4826 * mad_val
+                median_val = median(double(good_values), /even, /double)
+                mad_val = float(median(abs(double(good_values) - median_val), /even, /double))
+                median_val = float(median_val)
+                
+                ; double the noise so interpolated pixels are further downweighted!!
+                noise_sigma = 2 * 1.4826 * mad_val
                 
                 ; Generate Gaussian noise for replaced pixels
+                seed = 12345L
                 if n_nans gt 0 then begin
                     ; Generate random Gaussian noise with estimated sigma
                     gaussian_noise = randomn(seed, n_nans) * noise_sigma
@@ -184,40 +188,24 @@ for i = 0, n_process_cubes-1 do begin
         ; Apply progressive sigma filtering
         ; First pass: 3x3 filter
         frame_ii_clipped = sigma_filter(frame_ii, 3, N_sigma=sigma_clip, /all, /iter)
-        n_clipped_3x3 = total(finite(frame_ii) and ~finite(frame_ii_clipped))
         frame_ii = frame_ii_clipped
         
         ; Second pass: 5x5 filter  
         frame_ii_clipped = sigma_filter(frame_ii, 5, N_sigma=sigma_clip, /all, /iter)
-        n_clipped_5x5 = total(finite(frame_ii) and ~finite(frame_ii_clipped))
         frame_ii = frame_ii_clipped
         
         ; Third pass: 7x7 filter
         frame_ii_clipped = sigma_filter(frame_ii, 7, N_sigma=sigma_clip, /all, /iter)
-        n_clipped_7x7 = total(finite(frame_ii) and ~finite(frame_ii_clipped))
         
         ; Store the final clipped frame
         obj_cube[*,*,frame_idx] = frame_ii_clipped
         
         ; Update statistics
         frame_pixels = x_dim * y_dim
-        frame_clipped = n_clipped_3x3 + n_clipped_5x5 + n_clipped_7x7
         total_pixels_processed += frame_pixels
-        total_pixels_clipped += frame_clipped
-        
-        ; Debug output for first frame
-        if (frame_idx eq 0) and (debug eq 1) then begin
-            debug_file = output_folder + base_name + '_sigma_clip_debug_frame0.fits'
-            writefits, debug_file, frame_ii_clipped
-            print, '    Debug: First frame saved to ', file_basename(debug_file)
-            print, '    Debug: NaNs replaced: ', n_nans
-            print, '    Debug: Clipped in 3x3: ', n_clipped_3x3
-            print, '    Debug: Clipped in 5x5: ', n_clipped_5x5  
-            print, '    Debug: Clipped in 7x7: ', n_clipped_7x7
-        endif
         
         ; Progress reporting
-        if (frame_idx mod 100) eq 0 then begin
+        if (frame_idx mod 41) eq 0 then begin
             percent_complete = 100.0 * frame_idx / (total_frames-1)
             print, '    Progress: ', string(percent_complete, format='(F5.1)'), '% (frame index', $
                    frame_idx, '/', total_frames-1, ')'
@@ -225,11 +213,8 @@ for i = 0, n_process_cubes-1 do begin
     endfor
     
     ; Report statistics for this cube
-    clip_percentage = 100.0 * total_pixels_clipped / total_pixels_processed
     print, '  Statistics:'
     print, '    Total pixels processed: ', total_pixels_processed
-    print, '    Total pixels clipped: ', total_pixels_clipped, $
-           ' (', string(clip_percentage, format='(F5.2)'), '%)'
     
     ; Save the sigma-clipped cube
     print, '  Saving sigma-clipped cube: ', file_basename(output_file)

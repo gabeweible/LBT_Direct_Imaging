@@ -125,11 +125,11 @@ endelse
 if keyword_set(NaN) then begin
    wnotfinite = where(finite(imgs) eq 0,notfinitecount)
    if notfinitecount eq 0 then return ; bail if no bad pix
-   badpix=dblarr(sz[1],sz[2],nimg)+1B
+   badpix=fltarr(sz[1],sz[2],nimg)+1B
    badpix[wnotfinite]=0
 endif
 if keyword_set(badvalmask) then begin
-   badpix=dblarr(sz[1],sz[2],nimg)+1B
+   badpix=fltarr(sz[1],sz[2],nimg)+1B
    wbad = where(imgs eq BADVAL,badcount)
    if badcount gt 0 then badpix[wbad]=0
 endif 

@@ -32,7 +32,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
   newline = STRING(10B)
 
   if ~keyword_set(run) then run = 5
-  if ~keyword_set(do_smooth) then do_smooth = 0
+  if ~keyword_set(do_smooth) then do_smooth = 1
   if ~keyword_set(half_cropped_sz) then half_cropped_sz = 190
   if ~keyword_set(aperture) then aperture = 'both'
   if ~keyword_set(hp_width) then hp_width = 0
@@ -48,21 +48,21 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
   crop_size = 2*half_cropped_sz+1
   
   
-  if stripe eq 'center1024' and obj eq 'hii1348' then begin
-    SX_PSF_Y = 701
-    DX_PSF_Y = 259
-    SX_PSF_X = 547
-    DX_PSF_X = 1475
-    LEFT_PSF_X = SX_PSF_X - 200
-    RIGHT_PSF_X = SX_PSF_X + 200
-    
-    ; Pre-compute SX cropping indices
-    sx_left_x0 = LEFT_PSF_X - half_cropped_sz
-    sx_left_x1 = LEFT_PSF_X + half_cropped_sz
-    sx_right_x0 = RIGHT_PSF_X - half_cropped_sz
-    sx_right_x1 = RIGHT_PSF_X + half_cropped_sz
-    sx_y0 = SX_PSF_Y - half_cropped_sz
-    sx_y1 = SX_PSF_Y + half_cropped_sz
+	if stripe eq 'center1024' and obj eq 'hii1348' then begin
+		SX_PSF_Y = 701
+		DX_PSF_Y = 259
+		SX_PSF_X = 547
+		DX_PSF_X = 1475
+		LEFT_PSF_X = SX_PSF_X - 200
+		RIGHT_PSF_X = SX_PSF_X + 200
+		
+		; Pre-compute SX cropping indices
+		sx_left_x0 = LEFT_PSF_X - half_cropped_sz
+		sx_left_x1 = LEFT_PSF_X + half_cropped_sz
+		sx_right_x0 = RIGHT_PSF_X - half_cropped_sz
+		sx_right_x1 = RIGHT_PSF_X + half_cropped_sz
+		sx_y0 = SX_PSF_Y - half_cropped_sz
+		sx_y1 = SX_PSF_Y + half_cropped_sz
     
     ; TYC 5709 - START WITH HII 1348 GUESSES
 	endif else if stripe eq 'center1024' and obj eq 'tyc5709' then begin
@@ -107,28 +107,119 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 		dx_right_y0 = DX_PSF_Y2 - half_cropped_sz
 		dx_right_y1 = DX_PSF_Y2 + half_cropped_sz
     
-  endif else if stripe eq 'second512' then begin
-  ; ALCOR
-    DX_PSF_X1 = 449
-    DX_PSF_X2 = 1372
-    DX_PSF_Y1 = 1279
-    DX_PSF_Y2 = 1258
-    
-    ; top-left
-	dx_left_x0 = DX_PSF_X1- half_cropped_sz
-	dx_left_x1 = DX_PSF_X1 + half_cropped_sz
-	dx_left_y0 = DX_PSF_Y1 - half_cropped_sz
-	dx_left_y1 = DX_PSF_Y1 + half_cropped_sz
+	  endif else if stripe eq 'second512' then begin
+		; ALCOR
+		DX_PSF_X1 = 449
+		DX_PSF_X2 = 1372
+		DX_PSF_Y1 = 1279
+		DX_PSF_Y2 = 1258
 		
-	; top-right
-	dx_right_x0 = DX_PSF_X2- half_cropped_sz
-	dx_right_x1 = DX_PSF_X2 + half_cropped_sz
-	dx_right_y0 = DX_PSF_Y2 - half_cropped_sz
-	dx_right_y1 = DX_PSF_Y2 + half_cropped_sz
-    
-  endif else begin
-    message, 'Invalid stripe: use center1024 or second512'
-  endelse
+		; top-left
+		dx_left_x0 = DX_PSF_X1- half_cropped_sz
+		dx_left_x1 = DX_PSF_X1 + half_cropped_sz
+		dx_left_y0 = DX_PSF_Y1 - half_cropped_sz
+		dx_left_y1 = DX_PSF_Y1 + half_cropped_sz
+			
+		; top-right
+		dx_right_x0 = DX_PSF_X2- half_cropped_sz
+		dx_right_x1 = DX_PSF_X2 + half_cropped_sz
+		dx_right_y0 = DX_PSF_Y2 - half_cropped_sz
+		dx_right_y1 = DX_PSF_Y2 + half_cropped_sz
+		
+	  ; start w/ WISPIT 2 values, but now we are full-frame.
+	  endif else if stripe eq 'Full_Image' and (obj eq 'HIP17034') then begin
+		print, 'HIP 17034 Full_Image correction enabled.', newline
+		
+		; in full-frmae dewarped coordinates.
+		; "1" is for the "left" nod = NOD_A = dith1. DX is top, SX is bottom
+		; (opposite of HII 1348)
+		; below have been updated once for NOD_A (dith1) and nod00 only.
+		; '2' is for the "right" nod = NOD_B = dith2
+		DX_PSF_X1 = 481
+		DX_PSF_Y1 = 1560
+		
+		SX_PSF_X1 = 502
+		SX_PSF_Y1 = 557
+		
+		DX_PSF_X2 = 1394 + 20
+		DX_PSF_Y2 = 1286 + 245
+		
+		SX_PSF_X2 = 1474 - 41
+		SX_PSF_Y2 = 749 - 165
+		
+		; Pre-compute cropping indices
+		; bottom-left
+		sx_left_x0 = SX_PSF_X1- half_cropped_sz
+		sx_left_x1 = SX_PSF_X1 + half_cropped_sz
+		sx_left_y0 = SX_PSF_Y1 - half_cropped_sz
+		sx_left_y1 = SX_PSF_Y1 + half_cropped_sz
+		
+		; top-left
+		dx_left_x0 = DX_PSF_X1- half_cropped_sz
+		dx_left_x1 = DX_PSF_X1 + half_cropped_sz
+		dx_left_y0 = DX_PSF_Y1 - half_cropped_sz
+		dx_left_y1 = DX_PSF_Y1 + half_cropped_sz
+		
+		; bottom-right
+		sx_right_x0 = SX_PSF_X2- half_cropped_sz
+		sx_right_x1 = SX_PSF_X2 + half_cropped_sz
+		sx_right_y0 = SX_PSF_Y2 - half_cropped_sz
+		sx_right_y1 = SX_PSF_Y2 + half_cropped_sz
+		
+		; top-right
+		dx_right_x0 = DX_PSF_X2- half_cropped_sz
+		dx_right_x1 = DX_PSF_X2 + half_cropped_sz
+		dx_right_y0 = DX_PSF_Y2 - half_cropped_sz
+		dx_right_y1 = DX_PSF_Y2 + half_cropped_sz
+			
+	  endif else if stripe eq 'Full_Image' and (obj eq 'HIP17900') then begin
+		print, 'HIP 17900 Full_Image correction enabled.', newline
+		
+		; in full-frmae dewarped coordinates.
+		; "1" is for the "left" nod = NOD_A = dith1. DX is top, SX is bottom
+		; (opposite of HII 1348)
+		; below have been updated once for NOD_A (dith1) and nod00 only.
+		; '2' is for the "right" nod = NOD_B = dith2
+		DX_PSF_X1 = 481+50+7
+		DX_PSF_Y1 = 1560-5-2
+		
+		SX_PSF_X1 = 502-20
+		SX_PSF_Y1 = 557-76-3
+		
+		DX_PSF_X2 = 1394 + 20-49+98+3
+		DX_PSF_Y2 = 1286 + 245-10+5
+		
+		SX_PSF_X2 = 1474 - 41+22-45-3
+		SX_PSF_Y2 = 749 - 165-85+2
+		
+		; Pre-compute cropping indices
+		; bottom-left
+		sx_left_x0 = SX_PSF_X1- half_cropped_sz
+		sx_left_x1 = SX_PSF_X1 + half_cropped_sz
+		sx_left_y0 = SX_PSF_Y1 - half_cropped_sz
+		sx_left_y1 = SX_PSF_Y1 + half_cropped_sz
+		
+		; top-left
+		dx_left_x0 = DX_PSF_X1- half_cropped_sz
+		dx_left_x1 = DX_PSF_X1 + half_cropped_sz
+		dx_left_y0 = DX_PSF_Y1 - half_cropped_sz
+		dx_left_y1 = DX_PSF_Y1 + half_cropped_sz
+		
+		; bottom-right
+		sx_right_x0 = SX_PSF_X2- half_cropped_sz
+		sx_right_x1 = SX_PSF_X2 + half_cropped_sz
+		sx_right_y0 = SX_PSF_Y2 - half_cropped_sz
+		sx_right_y1 = SX_PSF_Y2 + half_cropped_sz
+		
+		; top-right
+		dx_right_x0 = DX_PSF_X2- half_cropped_sz
+		dx_right_x1 = DX_PSF_X2 + half_cropped_sz
+		dx_right_y0 = DX_PSF_Y2 - half_cropped_sz
+		dx_right_y1 = DX_PSF_Y2 + half_cropped_sz
+			
+	  endif else begin
+		message, 'Invalid stripe.'
+	  endelse
 
   ; Pre-compute smoothing kernels once
   use_lp_smooth = (do_smooth gt 0)
@@ -231,8 +322,8 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
     base = file_basename(path)
     
     ; FIXED: Determine NOD position based on sequence number
-    ; Even nod numbers (00, 02, 04...) go to dith1
-    ; Odd nod numbers (01, 03, 05...) go to dith2
+    ; Even nod numbers (00, 02, 04...) go to dith1 = NOD_A
+    ; Odd nod numbers (01, 03, 05...) go to dith2 = NOD_B
     if (nod_numbers[c] mod 2) eq 0 then begin
       nod = 'dith1'
     endif else begin
@@ -288,9 +379,11 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
       pad[*] = med  ; Fill entire array with median
       if stripe eq 'center1024' then begin
         pad[0:xdim-1, 512:512+ydim-1] = data
-      endif else begin
+      endif else if stripe eq 'second512' then begin
         pad[0:xdim-1, 1024:1024+ydim-1] = data
-      endelse
+      endif else if stripe eq 'Full_Image' then begin
+      	pad[0:xdim-1, 0:ydim-1] = data
+      endif
 
       ; Process SX mirror data
       if process_sx then begin
@@ -300,7 +393,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         ; SX DITH 2
         if nod eq 'dith2' then begin
         
-			if stripe eq 'center1024' and obj eq 'tyc5709' then begin
+			if ((stripe eq 'center1024') and (obj eq 'tyc5709')) or ((stripe eq 'Full_Image') and ((obj eq 'HIP17034') or (obj eq 'HIP17900'))) then begin
 				cropped = dew_sx[sx_right_x0:sx_right_x1, sx_right_y0:sx_right_y1]
 			endif else begin
 				cropped = dew_sx[sx_left_x0:sx_left_x1, sx_y0:sx_y1]
@@ -318,13 +411,15 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 				cube_sx[*,*,i] = cropped
 			endelse
 			
+						if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_sx2_cropped_test.fits', cube_sx[*,*,i]
+			
         endif
         
         ; SX DITH 1
         if nod eq 'dith1' then begin
         	;print, 'working on SX dith 1'
         
-			if stripe eq 'center1024' and obj eq 'tyc5709' then begin
+			if ((stripe eq 'center1024') and (obj eq 'tyc5709')) or ((stripe eq 'Full_Image') and ((obj eq 'HIP17034') or (obj eq 'HIP17900'))) then begin
 				;print, 'TUC 5709 cropping SX dith1 ...'
 				cropped = dew_sx[sx_left_x0:sx_left_x1, sx_left_y0:sx_left_y1]
 			endif else begin
@@ -343,7 +438,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 				cube_sx[*,*,i] = cropped
 			endelse
 			
-			if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_sx_cropped_test.fits', cube_sx[*,*,i]
+			if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_sx1_cropped_test.fits', cube_sx[*,*,i]
 			
         endif
         
@@ -357,7 +452,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         ; SX DITH 2
         if nod eq 'dith2' then begin
         
-			if stripe eq 'center1024' and obj eq 'tyc5709' then begin
+			if ((stripe eq 'center1024') and (obj eq 'tyc5709')) or ((stripe eq 'Full_Image') and ((obj eq 'HIP17034') or (obj eq 'HIP17900'))) then begin
 				cropped = dew_dx[dx_right_x0:dx_right_x1, dx_right_y0:dx_right_y1]
 			endif else begin; Alcor
 				cropped = dew_dx[dx_right_x0:dx_right_x1, dx_right_y0:dx_right_y1]
@@ -375,13 +470,15 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 				cube_dx[*,*,i] = cropped
 			endelse
 			
+			if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_dx2_cropped_test.fits', cube_dx[*,*,i]
+			
         endif
         
         ; SX DITH 1
         if nod eq 'dith1' then begin
         	;print, 'working on SX dith 1'
         
-			if stripe eq 'center1024' and obj eq 'tyc5709' then begin
+			if ((stripe eq 'center1024') and (obj eq 'tyc5709')) or ((stripe eq 'Full_Image') and ((obj eq 'HIP17034') or (obj eq 'HIP17900'))) then begin
 				;print, 'TUC 5709 cropping SX dith1 ...'
 				cropped = dew_dx[dx_left_x0:dx_left_x1, dx_left_y0:dx_left_y1]
 			endif else begin; Alcor
@@ -400,7 +497,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 				cube_dx[*,*,i] = cropped
 			endelse
 			
-			if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_dx_cropped_test.fits', cube_dx[*,*,i]
+			if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_dx1_cropped_test.fits', cube_dx[*,*,i]
 			
         endif
         

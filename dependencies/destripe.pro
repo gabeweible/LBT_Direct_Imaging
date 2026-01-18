@@ -78,8 +78,9 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
         90: begin
             weight = total(mask, 2)
             for i = 0, n3-1 do begin
-                hhh[where(hhh eq 0)] = !VALUES.F_NAN
+                hhh[*,*] = !VALUES.F_NAN  ; <-- Set all to NaN first
                 hhh[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1] = d[*,*,i]
+                
                 x = medcol(hhh, mask, 2)
                 
                 index = where(weight gt fraction*ny, cnt)

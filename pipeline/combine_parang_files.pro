@@ -2,7 +2,7 @@ PRO combine_parang_files, obj, base_dir, output_dir, nod_min, nod_max
 ; Base_dir is where the parang.sav files are
 ; output_dir is the full path to output the combined results
 
-  ; Define base directory
+  ; Pass base and output directories, e.g.:
  ; base_dir = '/Users/gweible/OneDrive - University of Arizona/research/Alcor/macbook_5/'
  ; output_dir = '/Users/gweible/OneDrive - University of Arizona/research/Alcor/macbook_5/processed_right/'
   
