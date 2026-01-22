@@ -369,10 +369,10 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
             
             if obj_name eq 'HIP17900' then begin
                 ; cross-talk column issues to mask
-                master_badpix_mask[1408, *] = 0
-                master_badpix_mask[1344:1345, *] = 0
-                master_badpix_mask[448, *] = 0
-                master_badpix_mask[575, *] = 0
+                master_badpix_mask[1408, 1500:1570] = 0
+                master_badpix_mask[1344:1345, 470:540] = 0
+                master_badpix_mask[447, 440:510] = 0
+                master_badpix_mask[575, 1525:1595] = 0
             endif
             
             print, 'Saving complete bad pixel mask...'
@@ -563,7 +563,7 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
                 endif
                 
                 if (do_destripe eq 1) and ((obj_name eq 'tyc5709') or (obj_name eq 'HIP17034') or (obj_name eq 'HIP17900')) then begin
-                    print, '  Applying destriping to tyc5709 or HIP17034 NOD cube...'
+                    print, '  Applying destriping to NOD cube...'
                     
                     x_arr = indgen(x_dim) # replicate(1, y_dim)
                     y_arr = replicate(1, x_dim) # indgen(y_dim)
@@ -723,15 +723,22 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
                         frame_ii_median = float(median(double(frame_for_stripes), /double, /even))
                         frame_ii_stddev = float(stddev(double(frame_for_stripes), /nan, /double))
                         
-                        value_mask = (frame_for_stripes lt (frame_ii_median - nantr*frame_ii_stddev)) OR $
-                                    (frame_for_stripes gt (frame_ii_median + nantr*frame_ii_stddev))
+                        low_nantr_thresh = frame_ii_median - nantr*frame_ii_stddev
+                        high_nantr_thresh = frame_ii_median + nantr*frame_ii_stddev
+                        if debug eq 1 and kk mod 41 then begin
+                            print, 'low_nantr_thresh: ', low_nantr_thresh
+                            print, 'high_nantr_thresh: ', high_nantr_thresh
+                        endif
+                        
+                        value_mask = (frame_for_stripes lt low_nantr_thresh) OR $
+                                    (frame_for_stripes gt high_nantr_thresh)
                         
                         nanmask = where(value_mask)
                         if nanmask[0] ne -1 then begin
                             frame_for_stripes[nanmask] = !values.f_nan
                             frame_ii[nanmask] = !values.f_nan
                         endif
-                        
+                            
                         if debug eq 1 and kk eq 2 then writefits,$
                             strcompress('~/Desktop/nod_'+string(i)+'_masked_test.fits', /r),$
                             frame_for_stripes
@@ -752,28 +759,78 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
                             print, '  frame_ii median: ', median(frame_ii, /double)
                         endif
                         
-                        destriped_frame = destripe(frame_for_stripes, frame_ii, 90., fraction=0.02, $
-                                                   /no_fit, /nodisp)
-                                                   
+                        ; Create quadrant-specific frames for vertical destriping
+                        frame_for_stripes_top = frame_for_stripes
+                        frame_for_stripes_bottom = frame_for_stripes
+                        
+                        ; Mask out the bottom half for top quadrant processing
+                        frame_for_stripes_top[*, 0:1023] = !values.f_nan
+                        
+                        ; Mask out the top half for bottom quadrant processing  
+                        frame_for_stripes_bottom[*, 1024:2047] = !values.f_nan
+                        
+                        if debug eq 1 and kk eq 2 then BEGIN
+                            writefits,$
+                                strcompress('~/Desktop/nod_'+string(i)+'_masked_test_top.fits', /r),$
+                                frame_for_stripes_top
+                            
+                            writefits,$
+                                strcompress('~/Desktop/nod_'+string(i)+'_masked_test_bottom.fits', /r),$
+                                frame_for_stripes_bottom
+                        endif
+                        
+                        ; Destripe top quadrant (rows 1024-2047)
+                        destriped_frame_top = destripe(frame_for_stripes_top, frame_ii, 90., fraction=0.02, $
+                                                       /no_fit, /nodisp)
+                                                       
+                        destriped_frame_top[where(destriped_frame_top gt frame_max_post_destripe)] = !values.f_nan
+                        destriped_frame_top[where(destriped_frame_top lt frame_min_post_destripe)] = !values.f_nan
+                        
+                        ; Destripe bottom quadrant (rows 0-1023)
+                        destriped_frame_bottom = destripe(frame_for_stripes_bottom, frame_ii, 90., fraction=0.02, $
+                                                          /no_fit, /nodisp)
+                                                          
+                        destriped_frame_bottom[where(destriped_frame_bottom gt frame_max_post_destripe)] = !values.f_nan
+                        destriped_frame_bottom[where(destriped_frame_bottom lt frame_min_post_destripe)] = !values.f_nan
+                        
+                        ; Combine the two destriped quadrants
+                        destriped_frame = frame_ii  ; Start with original frame
+                        destriped_frame[*, 0:1023] = destriped_frame_bottom[*, 0:1023]
+                        destriped_frame[*, 1024:2047] = destriped_frame_top[*, 1024:2047]
+                        
                         if i eq 0 and kk eq 2 then begin
-                            print, '  After vertical destripe (90deg):'
+                            print, '  After vertical destripe (90deg) with quadrant split:'
                             print, '  destriped_frame finite pixels: ', n_elements(where(finite(destriped_frame)))
                             print, '  destriped_frame median: ', median(destriped_frame, /double)
                             print, '  Number of NaNs added: ', n_elements(where(~finite(destriped_frame))) - n_elements(where(~finite(frame_ii)))
                         endif
-                                                   
-                        destriped_frame[where(destriped_frame gt frame_max_post_destripe)] = !values.f_nan
-                        destriped_frame[where(destriped_frame lt frame_min_post_destripe)] = !values.f_nan
                         
+                        ; Continue with the rest of the processing
                         frame_ii = destriped_frame
                         frame_for_stripes = frame_ii
                         
-                        if masked_pixels[0] ne -1 then frame_for_stripes[masked_pixels] = !values.f_nan
+                        frame_ii_median = float(median(double(frame_for_stripes), /double, /even))
+                        frame_ii_stddev = float(stddev(double(frame_for_stripes), /nan, /double))
+                        
+                        low_nantr_thresh = frame_ii_median - nantr*frame_ii_stddev
+                        high_nantr_thresh = frame_ii_median + nantr*frame_ii_stddev
+                        if debug eq 1 and kk mod 41 then begin
+                            print, 'low_nantr_thresh: ', low_nantr_thresh
+                            print, 'high_nantr_thresh: ', high_nantr_thresh
+                        endif
+                        
+                        value_mask = (frame_for_stripes lt low_nantr_thresh) OR $
+                                    (frame_for_stripes gt high_nantr_thresh)
+                        
+                        nanmask = where(value_mask)
                         if nanmask[0] ne -1 then begin
                             frame_for_stripes[nanmask] = !values.f_nan
                             frame_ii[nanmask] = !values.f_nan
                         endif
                         
+                        if masked_pixels[0] ne -1 then frame_for_stripes[masked_pixels] = !values.f_nan
+                        
+                        ; Horizontal destriping (0 degree) - this remains unchanged
                         destriped_frame = destripe(frame_for_stripes, frame_ii, 0., fraction=0.02, $
                                                    /no_fit, /nodisp)
                                                    
@@ -1088,13 +1145,20 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
 					frame_ii_median = float(median(double(frame_for_stripes), /double, /even))
 					frame_ii_stddev = float(stddev(double(frame_for_stripes), /nan, /double))
 					
-					value_mask = (frame_for_stripes lt (frame_ii_median - nantr*frame_ii_stddev)) OR $
-								(frame_for_stripes gt (frame_ii_median + nantr*frame_ii_stddev))
+					low_nantr_thresh = frame_ii_median - nantr*frame_ii_stddev
+					high_nantr_thresh = frame_ii_median + nantr*frame_ii_stddev
+					if debug eq 1 and kk mod 41 then begin
+                        print, 'low_nantr_thresh: ', low_nantr_thresh
+                        print, 'high_nantr_thresh: ', high_nantr_thresh
+                    endif
+					
+					value_mask = (frame_for_stripes lt low_nantr_thresh) OR $
+								(frame_for_stripes gt high_nantr_thresh)
 					
 					nanmask = where(value_mask)
 					if nanmask[0] ne -1 then begin
 					    frame_for_stripes[nanmask] = !values.f_nan
-					    frame_ii[nanmask] = !values.f_nan
+                        frame_ii[nanmask] = !values.f_nan
 					endif
 					
 					frame_for_stripes[where(master_badpix_mask eq 0)] = !values.f_nan
@@ -1142,12 +1206,26 @@ pro bad_pixels_fast, output_folder, obj_name, stripe,$
                     frame_ii = destriped_frame
                     frame_for_stripes = frame_ii
                     
-                    if masked_pixels[0] ne -1 then frame_for_stripes[masked_pixels] = !values.f_nan
-                    if nanmask[0] ne -1 then begin
-                        frame_for_stripes[nanmask] = !values.f_nan
-                        frame_ii[nanmask] = !values.f_nan
+                    frame_ii_median = float(median(double(frame_for_stripes), /double, /even))
+					frame_ii_stddev = float(stddev(double(frame_for_stripes), /nan, /double))
+					
+					low_nantr_thresh = frame_ii_median - nantr*frame_ii_stddev
+					high_nantr_thresh = frame_ii_median + nantr*frame_ii_stddev
+					if debug eq 1 and kk mod 41 then begin
+                        print, 'low_nantr_thresh: ', low_nantr_thresh
+                        print, 'high_nantr_thresh: ', high_nantr_thresh
                     endif
-                    
+					
+					value_mask = (frame_for_stripes lt low_nantr_thresh) OR $
+								(frame_for_stripes gt high_nantr_thresh)
+					
+					nanmask = where(value_mask)
+					if nanmask[0] ne -1 then begin
+					    frame_for_stripes[nanmask] = !values.f_nan
+					    frame_ii[nanmask] = !values.f_nan
+					endif
+                    if masked_pixels[0] ne -1 then frame_for_stripes[masked_pixels] = !values.f_nan
+
                     frame_for_stripes[where(master_badpix_mask eq 0)] = !values.f_nan
                     
                     ; Horizontal destriping (0 degree) - this remains unchanged

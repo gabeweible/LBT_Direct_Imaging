@@ -26,9 +26,9 @@ dark_frame_start = 'None';
 
 ; BADPIX parameters
 ; create master dark and master flat?
-create_master_masks = 0
+create_master_masks = 1
 ; create bad-pixel mast from master dark and master flat?
-create_badpix_mask = 0
+create_badpix_mask = 1
 ; removing column and row offsets.
 do_destripe = 1; done in bad_pixels_fast.pro now...
 boxhsize=1; 2*boxhsize x 2*boxhsize block of pixels for each comparison
@@ -44,7 +44,7 @@ do_smooth = 1.; FWHM for Gaussian smoothing before and after dewarping.
 dewarp_bin_type='mean' ; how to bin again before dewarping, if relevant?
 
 ; frame half-size in pixels for initial cropping.
-half_cropped_sz = 375;
+half_cropped_sz = 165; Gives some wiggle room above 150 for centering.
 
 ; General/Combine Parameters
 obj = 'HIP17900'; OBJNAME in FITS header
@@ -64,7 +64,7 @@ lambda_over_d = 8.487; temporary - estimated for 10.61 mas/px nominal platescale
 ; update directory (coadd = 12 discards 4 frames per nod position, including the first at each position.)
 ; loss is less than 1 minute of integration time, so 99.6% efficiency. Even coadd is preferred so that
 ; the two middle values are actually averaged in the median.
-output_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD1/gabe_macbook12/'
+output_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD1/gabe_macbook1/'
 
 ;______________________________________
 ; OLD FROM TYC5709 - UPDATE FOR PLEIAD3
@@ -116,9 +116,9 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
 ; not actually using fixen algorithm up-the-ramp, just CDS in this case.
 ;cosmic_ray_rejection_cube, obj, raw_path, cube_start_frame, coadd,$
  ;   output_path, read_header=1, coadd_type=coadd_type, legacy_mode='cds',$
-  ;  debug=1, dark_frame_start=dark_frame_start, max_frames_per_group=fix(fpn-1) / coadd,$
+  ;    debug=1, dark_frame_start=dark_frame_start, max_frames_per_group=fix(fpn-1) / coadd,$
    ; min_r_squared=0.9, full_well=4095*0.98,skip_first_read=0,$
-    ;skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1
+    ;skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1, nod_counter_add=0
 
 ; create darks cube
 ;cosmic_ray_rejection_cube, obj, darks_path, cube_start_frame, coadd,$
@@ -129,14 +129,14 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
      ;   skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1
 
 ; not using bad_px_arr right now (find them all via computation)
-;bad_pixels_fast, output_path, obj, stripe,$
-;	boxhsize=boxhsize, pre_sky_sub=1, type='res_mean',$
-;	run=run, do_destripe=do_destripe,$
-;	fwhm=fwhm, just_destripe=0, do_second_round=0,$
-;	do_first_round=1, just_second_round=0, debug=1,$
-;	create_master_masks=create_master_masks,$
-;	create_badpix_mask=create_badpix_mask, coadd=coadd,$
-;	darks_filename='HIP17900_darks_cube.fits', vapp=0, post_pca_crop=0
+bad_pixels_fast, output_path, obj, stripe,$
+	boxhsize=boxhsize, pre_sky_sub=1, type='res_mean',$
+	run=run, do_destripe=do_destripe,$
+	fwhm=fwhm, just_destripe=0, do_second_round=0,$
+	do_first_round=1, just_second_round=0, debug=1,$
+	create_master_masks=create_master_masks,$
+	create_badpix_mask=create_badpix_mask, coadd=coadd,$
+	darks_filename='HIP17900_darks_cube.fits', vapp=0, post_pca_crop=0
 
 ; NEW!! Sigma-clipping after bad-pixel-mask interpolation
 ; this is frame-to-frame
@@ -169,15 +169,15 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
 ;		output_suffix='_pca_skysub_filled_cube.fits',$
 ;		input_prefix='test_pca_skysub_cube'
     
-if do_dewarp eq 1 then begin
+;if do_dewarp eq 1 then begin
 
 	; new combined dewarping and splitting to reduce memory requirements.
-	dewarp_split_combined, output_path, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx,$
-		do_smooth=do_smooth, half_cropped_sz=half_cropped_sz, aperture=aperture, run=run,$
-		fwhm=fwhm, hp_width=0, nod_filter=nod_filter, debug=1,$
-		destripe_skysub=1, pca_skysub=1, filled=1
+;	dewarp_split_combined, output_path, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx,$
+;		do_smooth=do_smooth, half_cropped_sz=half_cropped_sz, aperture=aperture, run=run,$
+;		fwhm=fwhm, hp_width=0, nod_filter=nod_filter, debug=1,$
+;		destripe_skysub=1, pca_skysub=1, filled=1
         
-endif; else begin; dewarp if
+;endif; else begin; dewarp if
 ;	; 1 is for skysub_first
 ;	split, obj, stripe, output_path, half_cropped_sz, aperture, skysub_first, do_dewarp,$
 ;		fwhm=fwhm
