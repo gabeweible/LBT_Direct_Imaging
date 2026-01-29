@@ -26,9 +26,9 @@ dark_frame_start = 'None';
 
 ; BADPIX parameters
 ; create master dark and master flat?
-create_master_masks = 1
+create_master_masks = 0
 ; create bad-pixel mast from master dark and master flat?
-create_badpix_mask = 1
+create_badpix_mask = 0
 ; removing column and row offsets.
 do_destripe = 1; done in bad_pixels_fast.pro now...
 boxhsize=1; 2*boxhsize x 2*boxhsize block of pixels for each comparison
@@ -44,7 +44,7 @@ do_smooth = 1.; FWHM for Gaussian smoothing before and after dewarping.
 dewarp_bin_type='mean' ; how to bin again before dewarping, if relevant?
 
 ; frame half-size in pixels for initial cropping.
-half_cropped_sz = 165; Gives some wiggle room above 150 for centering.
+half_cropped_sz = 295
 
 ; General/Combine Parameters
 obj = 'HIP17900'; OBJNAME in FITS header
@@ -59,6 +59,7 @@ aperture = 'both'
 ; OLD FROM TYC5709 - UPDATE FOR PLEIAD3
 ;______________________________________
 fwhm = 10.6245 ; from VIP for TYC 5709 - to be updated for PLEIAD 3
+; "In practice, D = 8.36 and Bmax = 22.65 m, because the adaptive secondaries in each LBT are purposefully undersized to control the thermal background." - Patru et al. 2017
 lambda_over_d = 8.487; temporary - estimated for 10.61 mas/px nominal platescale
 
 ; update directory (coadd = 12 discards 4 frames per nod position, including the first at each position.)
@@ -129,26 +130,26 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
      ;   skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1
 
 ; not using bad_px_arr right now (find them all via computation)
-bad_pixels_fast, output_path, obj, stripe,$
-	boxhsize=boxhsize, pre_sky_sub=1, type='res_mean',$
-	run=run, do_destripe=do_destripe,$
-	fwhm=fwhm, just_destripe=0, do_second_round=0,$
-	do_first_round=1, just_second_round=0, debug=1,$
-	create_master_masks=create_master_masks,$
-	create_badpix_mask=create_badpix_mask, coadd=coadd,$
-	darks_filename='HIP17900_darks_cube.fits', vapp=0, post_pca_crop=0
+;bad_pixels_fast, output_path, obj, stripe,$
+;	boxhsize=boxhsize, pre_sky_sub=1, type='res_mean',$
+;	run=run, do_destripe=do_destripe,$
+;	fwhm=fwhm, just_destripe=0, debug=0,$
+;	create_master_masks=create_master_masks,$
+;	create_badpix_mask=create_badpix_mask, coadd=coadd,$
+;	darks_filename='HIP17900_darks_cube.fits', vapp=0, post_pca_crop=0,$
+;	start_nod=0
 
 ; NEW!! Sigma-clipping after bad-pixel-mask interpolation
 ; this is frame-to-frame
 ;sigma_clip_cubes, obj, output_path, cube_folder=output_path, $
  ;             sigma_clip=sigma_clip, debug=1, $
-  ;            overwrite=1, frame_min=-12,$ ; ADJUST FRAME_MIN TO MATCH bad_pixels_fast (post destripe)!!!
-   ;           cube_indices=[21,22,23,24,25]
+  ;            overwrite=1, frame_min=-40,$ ; ADJUST FRAME_MIN TO MATCH bad_pixels_fast (post destripe)!!!
+   ;           cube_indices=[7,8,9]
 
 ; NEW!!! fill remaining NaNs with frame medians + MAD-estimated Gaussian
 ; noise
 ;fill_nan_cubes, obj, output_path, cube_folder=output_path,$
- ;   debug=debug, overwrite=1;, cube_indices=[7]
+ ;   debug=debug, overwrite=1;, cube_indices=[18,19,20,21,22,23,24,25]
 ;	
 ; SKY SUBTRACTION IN 'pleiad1_pca_bkg_subtr_1cell.ipynb' !!!!
 
@@ -157,17 +158,17 @@ bad_pixels_fast, output_path, obj, stripe,$
 ;bad_pixels_fast, output_path, obj, stripe,$
  ;   boxhsize=boxhsize, pre_sky_sub=0, type='res_mean',$
   ;  run=run, do_destripe=do_destripe,$
-   ; fwhm=fwhm, just_destripe=1, do_second_round=0,$
-    ;do_first_round=1, just_second_round=0, debug=1,$
+   ; fwhm=fwhm, just_destripe=0, debug=0,$
 ;    create_master_masks=create_master_masks,$
  ;   create_badpix_mask=create_badpix_mask, coadd=coadd,$
   ;  darks_filename='HIP17900_darks_cube.fits', vapp=0,$
-   ; destripe_skysub=1, pca_skysub=1, post_pca_crop=1
+   ; destripe_skysub=1, pca_skysub=1, post_pca_crop=1, start_nod=0,$
+    ;skip_badpix_mask=1
 
-;fill_nan_cubes, obj, output_path, cube_folder=output_path,$
-;		debug=debug, overwrite=0, input_suffix='_10comp_skysub_destriped_cube.fits',$
-;		output_suffix='_pca_skysub_filled_cube.fits',$
-;		input_prefix='test_pca_skysub_cube'
+fill_nan_cubes, obj, output_path, cube_folder=output_path,$
+		debug=debug, overwrite=1, input_suffix='_30comp_corrected_cube.fits',$
+		output_suffix='_pca_skysub_filled_cube.fits',$
+		input_prefix='test_pca_skysub_cube'
     
 ;if do_dewarp eq 1 then begin
 

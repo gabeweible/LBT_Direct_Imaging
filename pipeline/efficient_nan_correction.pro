@@ -1,6 +1,6 @@
 ; Efficient bad pixel correction for frames where bad pixels are already NaN
 ; Only applies fixpix to small clusters/isolated NaN pixels
-; Large NaN regions remain as NaN
+; Large NaN regions remain as NaN.
 
 pro efficient_nan_correction, frame, fixed_frame, $
     max_cluster_size=max_cluster_size, npix=npix, weight=weight, silent=silent
@@ -8,7 +8,7 @@ pro efficient_nan_correction, frame, fixed_frame, $
     compile_opt idl2
 
     ; Set defaults
-    if not keyword_set(max_cluster_size) then max_cluster_size = 50
+    if not keyword_set(max_cluster_size) then max_cluster_size = 50000
     if not keyword_set(npix) then npix = 24
     if not keyword_set(weight) then weight = 0
     if not keyword_set(silent) then silent = 0

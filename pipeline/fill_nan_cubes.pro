@@ -113,7 +113,7 @@ for i = 0, n_process_cubes-1 do begin
     
     ; Load the cube
     print, '  Loading cube...'
-    obj_cube = readfits_fast(input_file)
+    obj_cube = double(readfits_fast(input_file))
     
     ; Get cube dimensions
     cube_size = size(obj_cube, /dimensions)
@@ -148,12 +148,11 @@ for i = 0, n_process_cubes-1 do begin
                 frame_median = median(double(finite_values), /even, /double)
                 
                 ; Calculate robust noise estimate using MAD
-                mad_val = float(median(abs(double(finite_values) - frame_median), /even, /double))
-                noise_sigma = 2 * 1.4826 * mad_val
-                frame_median = float(frame_median)
+                mad_val = median(abs(double(finite_values) - frame_median), /even, /double)
+                noise_sigma = 1.4826 * mad_val
                 
                 ; Generate Gaussian noise for NaN pixels
-                gaussian_noise = randomn(seed, n_nans) * noise_sigma
+                gaussian_noise = randomn(seed, n_nans, /double) * noise_sigma
                 
                 ; Replace NaN values with median + noise
                 frame_ii[nan_mask] = frame_median + gaussian_noise
@@ -193,7 +192,7 @@ for i = 0, n_process_cubes-1 do begin
         total_pixels_processed += (x_dim * y_dim)
         
         ; Progress reporting
-        if (frame_idx mod 41) eq 0 then begin
+        if (frame_idx mod 100) eq 0 then begin
             percent_complete = 100.0 * frame_idx / (total_frames-1)
             print, '    Progress: ', string(percent_complete, format='(F5.1)'), '% (frame ', $
                    frame_idx, '/', total_frames-1, ')'
@@ -217,7 +216,7 @@ for i = 0, n_process_cubes-1 do begin
     
     ; Save the filled cube
     print, '  Saving filled cube: ', file_basename(output_file)
-    writefits, output_file, obj_cube
+    writefits, output_file, float(obj_cube)
     
     ; Free memory
     delvar, obj_cube

@@ -3,6 +3,9 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
 
     compile_opt IDL2, HIDDEN
     
+    d = double(d) ; make sure we do calculations on double-precision frames
+    d_not_masked = double(d_not_masked)
+    
     ; Default parameters
     fraction = keyword_set(fraction) ? fraction : 0.2
     
@@ -37,7 +40,7 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
     ; Optional clipping
     if keyword_set(clip_level) then begin
         if n3 gt 1 then begin
-            clip_mask = total(d, 3) / n3 lt clip_level
+            clip_mask = total(d, 3, /double) / n3 lt clip_level
             mask[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1] AND= clip_mask
         endif else begin
             clip_mask = d lt clip_level
@@ -53,7 +56,7 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
     
     ; Vectorized processing for different angle cases
     case angle of
-        0: begin
+        0: begin; horizontal stripes
             weight = total(mask, 1)
             for i = 0, n3-1 do begin
                 hhh[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1] = d[*,*,i]
@@ -62,12 +65,22 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
                 index = where(weight gt fraction*nx, cnt)
                 ;if cnt lt 3 then message, 'No action possible: lower clip_level/fraction!'
                 
+                ; simple median
                 if keyword_set(no_fit) then $
                     st = replicate(1., nxx)#(x*(weight gt fraction*nx)) $
-                else begin
-                    dummy = SPL_INIT(yp[index], x[index])
-                    xf = SPL_INTERP(yp[index], x[index], dummy, yp)
-                    st = replicate(1., nxx)#xf
+                else begin; cubic spline interpolation
+                
+                    valid = where(finite(x[index]), valid_cnt)
+                    
+                    if valid_cnt gt 2 then begin
+                        dummy = SPL_INIT(yp[index[valid]], x[index[valid]], /double)
+                        xf = SPL_INTERP(yp[index[valid]], x[index[valid]], dummy, yp, /double)
+                        st = replicate(1., nxx)#xf
+                    endif else begin
+                        print, 'Error: not enough points to interpolate.'
+                        st = replicate(0., nxx, nyy)
+                    endelse
+                    
                 endelse
                 
                 h[*,*,i] = d_not_masked[*,*,i] - st[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1]
@@ -75,10 +88,9 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
             endfor
         end
         
-        90: begin
+        90: begin; vertical stripes
             weight = total(mask, 2)
             for i = 0, n3-1 do begin
-                hhh[*,*] = !VALUES.F_NAN  ; <-- Set all to NaN first
                 hhh[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1] = d[*,*,i]
                 
                 x = medcol(hhh, mask, 2)
@@ -89,7 +101,17 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
                 if keyword_set(no_fit) then $
                     st = x*(weight gt fraction*ny)#replicate(1., nyy) $
                 else begin
-                    xf = INTERPOL(x[index], xp[index], xp)
+                   ; xf = INTERPOL(x[index], xp[index], xp)
+                    
+                    ; cubic spline interpolation vertically
+                    valid = where(finite(x[index]), valid_cnt)
+                    if valid_cnt gt 2 then begin
+                        dummy = SPL_INIT(xp[index[valid]], x[index[valid]], /double)
+                        xf = SPL_INTERP(xp[index[valid]], x[index[valid]], dummy, xp, /double)
+                    endif else begin
+                        print, 'Error: not enough points to interpolate.'
+                    endelse
+                    
                     st = xf#replicate(1., nyy)
                 endelse
                 
@@ -99,12 +121,12 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
         end
         
         else: begin
-            mask = rot(mask, angle-90, /CUBIC)
+            mask = rot(mask, angle-90, CUBIC=-1.0)
             weight = total(mask, 2)
             
             for i = 0, n3-1 do begin
                 hhh[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1] = d[*,*,i]
-                hhh = rot(hhh, angle-90, CUBIC=-0.5)
+                hhh = rot(hhh, angle-90, CUBIC=-1.0)
                 x = medcol(hhh, mask, 2)
                 
                 index = where(weight gt fraction*ny, cnt)
@@ -113,13 +135,15 @@ function destripe, d, d_not_masked, angle, clip_level=clip_level, comment=commen
                 if keyword_set(no_fit) then $
                     st = x*(weight gt fraction*ny)#replicate(1., nyy) $
                 else begin
-                    xx = poly_fit(yp[index], x[index], 4)
+                    ; another option: 4th-deg polynomial fit for off-axis
+                    ; destriping
+                    xx = poly_fit(yp[index], x[index], 4, /double)
                     xf = x
                     xf[index] = xx
                     st = (x-xf)#replicate(1., nyy)
                 endelse
                 
-                st = rot(st, 90-angle, CUBIC=-0.5)
+                st = rot(st, 90-angle, CUBIC=-1.0)
                 h[*,*,i] = d_not_masked[*,*,i] - st[x_offset:x_offset+nx-1, y_offset:y_offset+ny-1]
                 if keyword_set(comment) then print, 'loop ', i, ' finished'
             endfor

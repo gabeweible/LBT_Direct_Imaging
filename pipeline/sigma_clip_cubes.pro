@@ -25,7 +25,7 @@ newline = string(10B)
 
 ; mask values less than this threshold before local-median replacement
 ; (for very stubborn pixels...)
-if not keyword_set(frame_min) then frame_min = -12
+if not keyword_set(frame_min) then frame_min = -40
 
 ; Set defaults
 if not keyword_set(cube_folder) then cube_folder = output_folder
@@ -163,7 +163,7 @@ for i = 0, n_process_cubes-1 do begin
                 median_val = float(median_val)
                 
                 ; double the noise so interpolated pixels are further downweighted!!
-                noise_sigma = 2 * 1.4826 * mad_val
+                noise_sigma = 1.4826 * mad_val
                 
                 ; Generate Gaussian noise for replaced pixels
                 seed = 12345L
