@@ -202,7 +202,7 @@ for ii = start_frame, end_frame do begin
             
             ; Process ramp reads with CR rejection
             process_ramp_self_calibrating, raw_frame, frame, cr_map, $
-                full_well, debug=debug, obj=object_name, timearr=exptimearr,$
+                full_well, debug=debug, timearr=exptimearr,$
                 dark_cube=dark_cube, min_r_squared=min_r_squared,$
                 skip_first_read=skip_first_read, skip_last_read=skip_last_read
         endelse

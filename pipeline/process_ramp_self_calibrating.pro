@@ -1,5 +1,5 @@
 pro process_ramp_self_calibrating, ramp_data, fitted_image, cr_count, $
-    full_well, debug=debug, obj=obj, timearr=timearr, dark_cube=dark_cube, $
+    full_well, debug=debug, timearr=timearr, dark_cube=dark_cube, $
     min_r_squared=min_r_squared, skip_first_read=skip_first_read, $
     sigma_threshold=sigma_threshold, max_iterations=max_iterations,$
     skip_last_read=skip_last_read

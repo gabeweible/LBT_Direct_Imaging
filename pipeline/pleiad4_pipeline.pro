@@ -1,4 +1,4 @@
-pro pleiad1_pipeline, outpath=outpath, coadd=coadd, extra=extra,$
+pro pleiad4_pipeline, outpath=outpath, coadd=coadd, extra=extra,$
 	do_dewarp=do_dewarp, set_coadd_type=set_coadd_type, nod_filter=nod_filter,$
 	cube_indices=cube_indices
 	
@@ -26,16 +26,16 @@ dark_frame_start = 'None';
 
 ; BADPIX parameters
 ; create master dark and master flat?
-create_master_masks = 0
+create_master_masks = 1
 ; create bad-pixel mast from master dark and master flat?
-create_badpix_mask = 0
+create_badpix_mask = 1
 ; removing column and row offsets.
 do_destripe = 1; done in bad_pixels_fast.pro now...
 boxhsize=1; 2*boxhsize x 2*boxhsize block of pixels for each comparison
 sigma_clip=3.5; for 3x3, 5x5, and 7x7 filters in sky_sub.pro
 
 ; SKYSUB parameters
-fpn = 1000; 'frames' per nod (really, ramps per nod position)
+fpn = 200; 'frames' per nod (really, ramps per nod position)
 ; doing sky subtraction after bad-px correction, now (0)
 skysub_first = 0
 
@@ -47,11 +47,11 @@ dewarp_bin_type='mean' ; how to bin again before dewarping, if relevant?
 half_cropped_sz = 295
 
 ; General/Combine Parameters
-obj = 'HIP17900'; OBJNAME in FITS header
+obj = 'HIP16653'; OBJNAME in FITS header
 band = 'L'
 wl = 3.672131; from SVO (at 77 K, effective, not central)
-raw_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD1/raw'
-darks_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD1/darks'
+raw_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD4/raw'
+darks_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD4/darks'
 stripe = 'Full_Image' ; NEW: I'll be working with full 2048 x 2048 frames up until cropping.
 aperture = 'both'
 
@@ -65,7 +65,7 @@ lambda_over_d = 8.487; temporary - estimated for 10.61 mas/px nominal platescale
 ; update directory (coadd = 12 discards 4 frames per nod position, including the first at each position.)
 ; loss is less than 1 minute of integration time, so 99.6% efficiency. Even coadd is preferred so that
 ; the two middle values are actually averaged in the median.
-output_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD1/gabe_macbook1/'
+output_path = '/Users/gweible/OneDrive - University of Arizona/research/PLEIAD_LBTI_data/PLEIAD4/gabe_macbook1/'
 
 ;______________________________________
 ; OLD FROM TYC5709
@@ -113,12 +113,13 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
 
 ;------------------------------[ Pipeline ]---------------------------------
 
-; not actually using fixen algorithm up-the-ramp, just CDS in this case.
-;cosmic_ray_rejection_cube, obj, raw_path, cube_start_frame, coadd,$
- ;   output_path, read_header=1, coadd_type=coadd_type, legacy_mode='cds',$
-  ;    debug=1, dark_frame_start=dark_frame_start, max_frames_per_group=fix(fpn-1) / coadd,$
-   ; min_r_squared=0.9, full_well=4095*0.98,skip_first_read=0,$
-    ;skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1, nod_counter_add=0
+; not CDS — fitting up the ramp!
+cosmic_ray_rejection_cube, obj, raw_path, cube_start_frame, coadd,$
+    output_path, read_header=1, coadd_type=coadd_type, legacy_mode=0,$
+      debug=1, dark_frame_start=dark_frame_start, max_frames_per_group=fix(fpn-1) / coadd,$
+    min_r_squared=0.9, full_well=4095*0.98,skip_first_read=0,$
+    skip_last_read=0, fpn=fpn, verbose=1, del_nodframe1=1, nod_counter_add=0,$
+    resume_from_nod=20
 
 ; create darks cube
 ;cosmic_ray_rejection_cube, obj, darks_path, cube_start_frame, coadd,$
@@ -169,15 +170,15 @@ if not keyword_set(nod_filter) then nod_filter = 'both' ; could also be set as '
 ;		output_suffix='_pca_skysub_filled_cube.fits',$
 ;		input_prefix='test_pca_skysub_cube'
     
-if do_dewarp eq 1 then begin
-
-	; new combined dewarping and splitting to reduce memory requirements.
-	dewarp_split_combined, output_path, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx,$
-		do_smooth=do_smooth, half_cropped_sz=half_cropped_sz, aperture=aperture, run=run,$
-		fwhm=fwhm, hp_width=0, nod_filter=nod_filter, debug=1,$
-		destripe_skysub=1, pca_skysub=1, filled=1
-        
-endif; else begin; dewarp if
+;if do_dewarp eq 1 then begin
+;
+;	; new combined dewarping and splitting to reduce memory requirements.
+;	dewarp_split_combined, output_path, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx,$
+;		do_smooth=do_smooth, half_cropped_sz=half_cropped_sz, aperture=aperture, run=run,$
+;		fwhm=fwhm, hp_width=0, nod_filter=nod_filter, debug=1,$
+;		destripe_skysub=1, pca_skysub=1, filled=1
+ ;       
+;endif; else begin; dewarp if
 ;	; 1 is for skysub_first
 ;	split, obj, stripe, output_path, half_cropped_sz, aperture, skysub_first, do_dewarp,$
 ;		fwhm=fwhm

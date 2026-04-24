@@ -236,13 +236,13 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 	
 		; destriping after PCA sky-subtraction
 		if keyword_set(destripe_skysub) and (filled eq 0) then begin
-			cube_files = file_search(dir + 'test_pca_skysub_cube_nod??_10comp_skysub_destriped_cube.fits', count=n_cubes)
+			cube_files = file_search(dir + 'test_pca_skysub_cube_nod??_30comp_skysub_destriped_cube.fits', count=n_cubes)
 		endif else if keyword_set(destripe_skysub) and (filled eq 1) then begin
 			search_dir = dir + 'test_pca_skysub_cube_nod??_pca_skysub_filled_cube.fits'
 			print, 'search_dir: ', search_dir
 			cube_files = file_search(search_dir, count=n_cubes)
 		endif else begin
-			cube_files = file_search(dir + 'test_pca_skysub_cube_nod??_10comp.fits', count=n_cubes)
+			cube_files = file_search(dir + 'test_pca_skysub_cube_nod??_30comp.fits', count=n_cubes)
 		endelse
 	
 	endelse
@@ -308,7 +308,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
   endfor
   
   ; Pre-allocate padded array to avoid repeated allocation
-  pad = fltarr(2048, 2048)
+  pad = dblarr(2048, 2048)
   
   ; Determine what needs to be processed
   print, 'Run: ', run
@@ -334,7 +334,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 
     ; Read entire cube at once for better I/O performance
     ;t0 = systime(1)
-    cube_data = readfits(path, header, /silent)
+    cube_data = double(readfits(path, header, /silent))
     ;print, 'Cube read time: ', systime(1)-t0, ' seconds'
     
     sz = size(cube_data)
@@ -344,10 +344,10 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 
     ; Initialize output arrays only for what we need
     if process_sx then begin
-      cube_sx = fltarr(crop_size, crop_size, frames)
+      cube_sx = dblarr(crop_size, crop_size, frames)
     endif
     if process_dx then begin
-      cube_dx = fltarr(crop_size, crop_size, frames)
+      cube_dx = dblarr(crop_size, crop_size, frames)
     endif
 
     ; Process frames
@@ -357,7 +357,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
       
       ; Extract frame and calculate median once
       data = cube_data[*,*,i]
-      med = median(data, /even)
+      med = median(data, /even, /double)
       
       ; Apply smoothing operations efficiently
       ; (do this before padding!)
@@ -366,12 +366,12 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         bad_mask = ~finite(data)
         if total(bad_mask) gt 0 then data[where(bad_mask)] = med
         
-        data = filter_image(data, FWHM=do_smooth, PSF=lp_PSF, /all_pixels)
+        data = double(filter_image(data, FWHM=do_smooth, PSF=lp_PSF, /all_pixels))
         
         if use_hp_smooth then begin
-          hp_filtered = filter_image(data, FWHM=hp_width, PSF=hp_PSF, /all_pixels)
+          hp_filtered = double(filter_image(data, FWHM=hp_width, PSF=hp_PSF, /all_pixels))
           data -= hp_filtered
-          data = filter_image(data, FWHM=do_smooth, PSF=lp_PSF, /all_pixels)
+          data = double(filter_image(data, FWHM=do_smooth, PSF=lp_PSF, /all_pixels))
         endif
       endif
       
@@ -387,7 +387,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 
       ; Process SX mirror data
       if process_sx then begin
-        dew_sx = poly_2d(pad, Kx_sx, Ky_sx, 2, cubic=-1.0, missing=med)
+        dew_sx = double(poly_2d(pad, double(Kx_sx), double(Ky_sx), 2, cubic=-1.0, missing=med))
         if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_sx_test.fits', dew_sx
         
         ; SX DITH 2
@@ -405,8 +405,8 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         		bad_mask = ~finite(cropped)
         		if total(bad_mask) gt 0 then cropped[where(bad_mask)] = med
         		
-				cube_sx[*,*,i] = filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
-												/all_pixels)
+				cube_sx[*,*,i] = double(filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
+												/all_pixels))
 			endif else begin
 				cube_sx[*,*,i] = cropped
 			endelse
@@ -432,8 +432,8 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         		bad_mask = ~finite(cropped)
         		if total(bad_mask) gt 0 then cropped[where(bad_mask)] = med
         		
-				cube_sx[*,*,i] = filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
-												/all_pixels)
+				cube_sx[*,*,i] = double(filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
+												/all_pixels))
 			endif else begin
 				cube_sx[*,*,i] = cropped
 			endelse
@@ -446,7 +446,7 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
 
       ; Process DX mirror data
       if process_dx then begin
-        dew_dx = poly_2d(pad, Kx_dx, Ky_dx, 2, cubic=-1.0, missing=med)
+        dew_dx = double(poly_2d(pad, double(Kx_dx), double(Ky_dx), 2, cubic=-1.0, missing=med))
         if debug eq 1 and i eq 0 then writefits, '~/Desktop/dewarped_dx_test.fits', dew_dx
         
         ; SX DITH 2
@@ -464,8 +464,8 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         		bad_mask = ~finite(cropped)
         		if total(bad_mask) gt 0 then cropped[where(bad_mask)] = med
         		
-				cube_dx[*,*,i] = filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
-												/all_pixels)
+				cube_dx[*,*,i] = double(filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
+												/all_pixels))
 			endif else begin
 				cube_dx[*,*,i] = cropped
 			endelse
@@ -491,8 +491,8 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
         		bad_mask = ~finite(cropped)
         		if total(bad_mask) gt 0 then cropped[where(bad_mask)] = med
         		
-				cube_dx[*,*,i] = filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
-												/all_pixels)
+				cube_dx[*,*,i] = double(filter_image(cropped, FWHM=do_smooth, PSF=lp_PSF,$
+												/all_pixels))
 			endif else begin
 				cube_dx[*,*,i] = cropped
 			endelse
@@ -514,13 +514,13 @@ pro dewarp_split_combined, dir, obj, stripe, Kx_sx, Ky_sx, Kx_dx, Ky_dx, $
     if process_sx then begin
         outfile = dir + 'processed_left/' + nod + '/' + obj + '_nod' + string(original_cube_index, format='(I02)') + '_cube_sx.fits'
         print, 'Writing SX to: ', outfile
-        writefits, outfile, cube_sx, /silent
+        writefits, outfile, float(cube_sx), /silent
     endif
     
     if process_dx then begin
         outfile = dir + 'processed_right/' + nod + '/' + obj + '_nod' + string(original_cube_index, format='(I02)') + '_cube_dx.fits'
         print, 'Writing DX to: ', outfile
-        writefits, outfile, cube_dx, /silent
+        writefits, outfile, float(cube_dx), /silent
     endif
     
     ;print, 'File writing time: ', systime(1)-t0, ' seconds'

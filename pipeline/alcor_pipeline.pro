@@ -139,7 +139,7 @@ wl=4.783381; from SVO (at 77 K)
 raw_path = '/Volumes/T7/alcor_raw'
 ; I manually moved the darks (last 2000 frames over here.)
 darks_path = '/Volumes/T7/alcor_darks'
-stripe = 'second512'; not center 1024 pixel rows, but second set of 512 from
+stripe = 'second512'; not center 1024 pixel rows, but second set of 512
 aperture = 'right'; DX aperture
 
 ;bad_px_arr = list([[1878,268], [1400, 190], [1208,7], [1656,45], [1400,202], [1355, 276], [590, 1222], [588, 1222], [440,242], [464,261], [411,244], [1360,233], [1361,239]])
