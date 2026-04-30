@@ -4,7 +4,7 @@ PRO combine_parang_files, obj, base_dir, output_dir, nod_min, nod_max
 
   ; Pass base and output directories, e.g.:
  ; base_dir = '/Users/gweible/OneDrive - University of Arizona/research/Alcor/macbook_5/'
- ; output_dir = '/Users/gweible/OneDrive - University of Arizona/research/Alcor/macbook_5/processed_right/'
+ ; output_dir = base_dir + 'processed_right/'
   
   ; Initialize arrays to store combined data
   dith1_angles_combined = []

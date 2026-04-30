@@ -68,7 +68,15 @@ nod_angles = list()
 nod_dits = list()
 
 ; Initialize dark frame storage
-if n_elements(dark_frame_start) gt 0 and dark_frame_start ne 'None' then begin
+dark_enabled = 0
+if n_elements(dark_frame_start) gt 0 then begin
+    if size(dark_frame_start, /tname) eq 'STRING' then begin
+        dark_enabled = (strupcase(dark_frame_start) ne 'NONE')
+    endif else begin
+        dark_enabled = 1
+    endelse
+endif
+if dark_enabled then begin
     dark_cube_list = list()
     dark_cr_counts = list()
     dark_angles = list()
@@ -118,7 +126,7 @@ for ii = start_frame, end_frame do begin
     
     ; Check if this is a dark frame
     is_dark_frame = 0
-    if n_elements(dark_frame_start) gt 0 and dark_frame_start ne 'None' then begin
+    if dark_enabled then begin
         if ii ge dark_frame_start then begin
             is_dark_frame = 1
         endif
@@ -161,6 +169,7 @@ for ii = start_frame, end_frame do begin
         if current_nod_for_resume ge resume_from_nod then begin
             skip_processing = 0
             nod_counter = current_nod_for_resume  ; Sync the actual nod counter
+            resume_mode=0 ; stop the resume block from re-firing
             print, 'Resume mode: Reached target nod ', resume_from_nod, ', starting processing...'
         endif
     endif
@@ -460,7 +469,7 @@ if dark_cube_list.Count() gt 0 then begin
     dark_cube_arr = (temporary(dark_cube_list)).toArray(/TRANSPOSE, /NO_COPY)
     
     ; Write with header preservation
-    writefits, dark_outbase+'.fits', dark_cube_arr, head
+    writefits, dark_outbase+'_cube.fits', dark_cube_arr, head
     
     ; Only write CR counts if not in CDS mode
     if not is_cds_mode then begin
@@ -474,7 +483,7 @@ if dark_cube_list.Count() gt 0 then begin
         save, filename=dark_outbase+'_parang.sav', dark_angles_arr, dark_dits_arr
     endif
     
-    print, 'Dark frame cube saved as: ', dark_outbase, '.fits'
+    print, 'Dark frame cube saved as: ', dark_outbase, '_cube.fits'
 endif
 
 if dark_cube_list.Count() eq 0 then begin

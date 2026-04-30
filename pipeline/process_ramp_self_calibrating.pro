@@ -9,7 +9,7 @@ compile_opt idl2
 if not keyword_set(debug) then debug=0
 if not keyword_set(dark_cube) then dark_cube=0
 if not keyword_set(skip_first_read) then skip_first_read=0
-if not keyword_set(skip_las_read) then skip_last_read=0
+if not keyword_set(skip_last_read) then skip_last_read=0
 if not keyword_set(min_r_squared) then min_r_squared=0.9
 if not keyword_set(sigma_threshold) then sigma_threshold=2.5
 if not keyword_set(max_iterations) then max_iterations=0
